@@ -20,6 +20,11 @@ public class LLMMeta extends MetaData {
     
     addDependency("io.github.ollama4j", "ollama4j", "1.0.79");
 
+    exclude("org.slf4j", "slf4j-api");
+    exclude("log4j", "log4j");
+    exclude("org.slf4j", "slf4j-log4j12");
+
+
     // add it to one or many categories
     addCategory("AI");
     

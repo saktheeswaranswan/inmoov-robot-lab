@@ -556,6 +556,17 @@ public class LLM extends Service<LLMConfig> implements TextListener, TextPublish
 
       Response response = null;
       LLM llm = (LLM) Runtime.start("llm", "LLM");
+      
+      WebGui webgui = (WebGui) Runtime.create("webgui", "WebGui");
+      webgui.autoStartBrowser(false);
+      webgui.startService();
+
+      boolean done = true;
+      if (done) {
+        return;
+      }
+      
+      
       LLM imagellm = (LLM) Runtime.start("imagellm", "LLM");
 
       llm.config.url = "http://192.168.0.24:11434/v1/chat/completions";
@@ -566,14 +577,6 @@ public class LLM extends Service<LLMConfig> implements TextListener, TextPublish
         System.out.println(response.msg);
       }
 
-      WebGui webgui = (WebGui) Runtime.create("webgui", "WebGui");
-      webgui.autoStartBrowser(false);
-      webgui.startService();
-
-      boolean done = true;
-      if (done) {
-        return;
-      }
 
       OpenCV cv = (OpenCV) Runtime.start("cv", "OpenCV");
       cv.capture();

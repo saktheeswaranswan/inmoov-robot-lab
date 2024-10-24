@@ -81,6 +81,8 @@ public class LLM extends Service<LLMConfig> implements TextListener, TextPublish
   OllamaAPI ollamaAPI;
 
   List<LinkedHashMap<String, Object>> userMessages = new ArrayList<>();
+  
+  List<String> userTextMessages = new ArrayList<>();
 
   public void addInput(String key, Object value) {
     inputs.put(key, value);
@@ -221,12 +223,46 @@ public class LLM extends Service<LLMConfig> implements TextListener, TextPublish
         URL url = new URL(config.url);
         ollamaAPI = new OllamaAPI(String.format("%s://%s:%d", url.getProtocol(), url.getHost(), url.getPort()));
       }
+      
+      
+      
+      // Create and format date and time strings
+      LocalDateTime currentDateTime = LocalDateTime.now();
+      DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+      DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("h:mm a");
+      DateTimeFormatter fullDateFormatter = DateTimeFormatter.ofPattern("EEEE MMMM d'th' yyyy h:mm a");
 
+      inputs.put("Date", currentDateTime.format(dateFormatter));
+      inputs.put("Time", currentDateTime.format(timeFormatter));
+      inputs.put("DateTime", currentDateTime.format(fullDateFormatter));
+
+      String systemContent = config.system;
+      
+      // Replace placeholders in system content
+      for (Map.Entry<String, Object> entry : inputs.entrySet()) {
+        if (entry.getValue() != null) {
+          systemContent = systemContent.replace(String.format("{{%s}}", entry.getKey()), entry.getValue().toString());
+        }
+      }
+
+      userTextMessages.add(text);
+
+      if (config.maxHistory > 0) {
+        while (userTextMessages.size() > config.maxHistory) {
+          userTextMessages.remove(0);
+        }
+      } else {
+        userTextMessages.clear();
+      }
+      
+      String finalText = systemContent + " " + text; 
+      
+      // sentence chunking stream processing
       final StringBuilder[] sentenceBuilder = { new StringBuilder() };
       final int[] lastProcessedLength = { 0 }; // Track the length of already
                                                // processed text
 
-      OllamaResult result = ollamaAPI.generate("llama3", text, false, new OptionsBuilder().build(), (s) -> {
+      OllamaResult result = ollamaAPI.generate("llama3", finalText, false, new OptionsBuilder().build(), (s) -> {
         // Append only the new portion of the text
         String newText = s.substring(lastProcessedLength[0]);
         sentenceBuilder[0].append(newText);

@@ -255,7 +255,13 @@ public class LLM extends Service<LLMConfig> implements TextListener, TextPublish
         userTextMessages.clear();
       }
       
-      String finalText = systemContent + " " + text; 
+      StringBuilder userText = new StringBuilder("");
+      for (String t : userTextMessages) {
+        userText.append(t);
+        userText.append(" ");
+      }
+      
+      String finalText =  systemContent + " " + text; 
       
       // sentence chunking stream processing
       final StringBuilder[] sentenceBuilder = { new StringBuilder() };

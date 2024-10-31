@@ -1,7 +1,13 @@
 package org.myrobotlab.service;
 
+import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -33,6 +39,12 @@ import org.slf4j.Logger;
 
 import io.github.ollama4j.OllamaAPI;
 import io.github.ollama4j.models.OllamaResult;
+import io.github.ollama4j.models.chat.OllamaChatMessage;
+import io.github.ollama4j.models.chat.OllamaChatMessageRole;
+import io.github.ollama4j.models.chat.OllamaChatRequestModel;
+import io.github.ollama4j.models.chat.OllamaChatResult;
+import io.github.ollama4j.models.generate.OllamaStreamHandler;
+import io.github.ollama4j.utils.Options;
 import io.github.ollama4j.utils.OptionsBuilder;
 
 /**
@@ -75,14 +87,16 @@ public class LLM extends Service<LLMConfig> implements TextListener, TextPublish
   protected String currentChannelName;
 
   protected String currentChannelType;
+  
+  transient protected OllamaAPI api = null;
+  
+  protected String ollam4JUrl = "";
 
   protected Map<String, Object> inputs = new LinkedHashMap<>();
 
-  OllamaAPI ollamaAPI;
-
   List<LinkedHashMap<String, Object>> userMessages = new ArrayList<>();
-  
-  List<String> userTextMessages = new ArrayList<>();
+
+  List<OllamaChatMessage> history = new ArrayList<>();
 
   public void addInput(String key, Object value) {
     inputs.put(key, value);
@@ -126,9 +140,13 @@ public class LLM extends Service<LLMConfig> implements TextListener, TextPublish
 
   }
 
-  OllamaAPI getOllamaApi() {
-    ollamaAPI = new OllamaAPI(config.url);
-    return ollamaAPI;
+  OllamaAPI getOllamaApi() throws MalformedURLException { 
+    if (api == null || ollam4JUrl == null || !ollam4JUrl.contentEquals(config.url)) {
+      URL url = new URL(config.url);
+      ollam4JUrl = config.url;
+      api = new OllamaAPI(String.format("%s://%s:%d", url.getProtocol(), url.getHost(), url.getPort()));
+    }
+    return api;
   }
 
   public String createChatCompletionPayload(String model, String systemContent, String userContent, int n, float temperature, int maxTokens) {
@@ -205,6 +223,56 @@ public class LLM extends Service<LLMConfig> implements TextListener, TextPublish
   }
 
   public Response getResponseStream(String text) {
+    return getResponseStream(text, null);
+  }
+
+  public static byte[] readUriContent(String uriString) throws Exception {
+    URI uri = new URI(uriString);
+
+    // Check if it's a local file
+    if ("file".equals(uri.getScheme())) {
+      return Files.readAllBytes(Paths.get(uri));
+    }
+
+    // For remote URIs (http or https)
+    try (InputStream inputStream = uri.toURL().openStream()) {
+      return inputStream.readAllBytes();
+    }
+  }
+
+  /***
+   * Converts images into a default chat completion prompt
+   * @param imageUrls
+   * @return
+   */
+  public Response getResponse(List<String> imageUrls) {
+    return getResponse(config.defaultImagePrompt, imageUrls);
+  }
+
+  /**
+   * convert images to array of bytes
+   * @param text
+   * @param imageUrls
+   * @return
+   */
+  public Response getResponse(String text, List<String> imageUrls) {
+//    List<byte[]> bimages = null;
+//    if (images != null) {
+//      bimages = new ArrayList<>();
+//      for (String uri : images) {
+//        if (uri.startsWith("file://")) {
+//          try {
+//            bimages.add(readUriContent(uri));
+//          } catch (Exception e) {
+//            error(e);
+//          }
+//        }
+//      }
+//    }
+    return getResponseStream(text, imageUrls);
+  }
+
+  public Response getResponseStream(String text, List<String> imageUrls) {
     try {
 
       if (config.sleepWord != null && text.contains(config.sleepWord) && !config.sleeping) {
@@ -214,17 +282,6 @@ public class LLM extends Service<LLMConfig> implements TextListener, TextPublish
       if (config.sleeping) {
         return null;
       }
-
-      if (ollamaAPI == null) {
-        // ollamaAPI = new OllamaAPI("http://192.168.0.24:11434");
-        // ollama api wants "host" .. which really isn't host, its protocol +
-        // host +
-        // port ie "base url"
-        URL url = new URL(config.url);
-        ollamaAPI = new OllamaAPI(String.format("%s://%s:%d", url.getProtocol(), url.getHost(), url.getPort()));
-      }
-      
-      
       
       // Create and format date and time strings
       LocalDateTime currentDateTime = LocalDateTime.now();
@@ -237,7 +294,7 @@ public class LLM extends Service<LLMConfig> implements TextListener, TextPublish
       inputs.put("DateTime", currentDateTime.format(fullDateFormatter));
 
       String systemContent = config.system;
-      
+
       // Replace placeholders in system content
       for (Map.Entry<String, Object> entry : inputs.entrySet()) {
         if (entry.getValue() != null) {
@@ -245,61 +302,55 @@ public class LLM extends Service<LLMConfig> implements TextListener, TextPublish
         }
       }
 
-      userTextMessages.add(text);
+      history.add(new OllamaChatMessage(OllamaChatMessageRole.USER, text));
 
       if (config.maxHistory > 0) {
-        while (userTextMessages.size() > config.maxHistory) {
-          userTextMessages.remove(0);
+        while (history.size() > config.maxHistory) {
+          history.remove(0);
         }
       } else {
-        userTextMessages.clear();
+        history.clear();
+      }
+
+      StreamHandler handler = new StreamHandler();
+
+      List<OllamaChatMessage> msgList = new ArrayList<>();
+
+      OllamaChatMessage msg = new OllamaChatMessage();
+      msg.setRole(OllamaChatMessageRole.SYSTEM);
+      msg.setContent(systemContent);
+      // msg.setImages(images); does not work for chat completions !!!!
+      msgList.add(msg);
+      msgList.addAll(history);
+
+      // system
+
+      // history
+
+      // files
+
+      // tools (lame)
+      
+      OptionsBuilder optionBuilder = new OptionsBuilder();
+      Options options = optionBuilder.build();
+      
+
+      OllamaChatRequestModel request = new OllamaChatRequestModel(config.model, msgList);
+
+      OllamaAPI ollamaApi = getOllamaApi();
+      String responseText = null;
+      
+      if (imageUrls != null) {
+        OllamaResult result = ollamaApi.generateWithImageURLs(config.model, text,  imageUrls, options, handler);
+        responseText = result.getResponse();
+      } else {
+        OllamaChatResult result = ollamaApi.chat(request, handler);
+        history.add(new OllamaChatMessage(OllamaChatMessageRole.ASSISTANT, result.getResponse()));
+        responseText = result.getResponse();
       }
       
-      StringBuilder userText = new StringBuilder("");
-      for (String t : userTextMessages) {
-        userText.append(t);
-        userText.append(" ");
-      }
-      
-      String finalText =  systemContent + " " + text; 
-      
-      // sentence chunking stream processing
-      final StringBuilder[] sentenceBuilder = { new StringBuilder() };
-      final int[] lastProcessedLength = { 0 }; // Track the length of already
-                                               // processed text
 
-      OllamaResult result = ollamaAPI.generate(config.model, finalText, false, new OptionsBuilder().build(), (s) -> {
-        // Append only the new portion of the text
-        String newText = s.substring(lastProcessedLength[0]);
-        sentenceBuilder[0].append(newText);
-
-        // Update the last processed length
-        lastProcessedLength[0] = s.length();
-
-        // Check for completed sentences in the accumulated text
-        int lastPeriodIndex = sentenceBuilder[0].lastIndexOf(".");
-        if (lastPeriodIndex != -1) {
-          // Extract and print the last completed sentence
-          String completeSentence = sentenceBuilder[0].substring(0, lastPeriodIndex + 1).trim();
-
-          invoke("publishText", completeSentence);
-
-          Utterance utterance = new Utterance();
-          utterance.username = getName();
-          utterance.text = completeSentence;
-          utterance.isBot = true;
-          utterance.channel = currentChannel;
-          utterance.channelType = currentChannelType;
-          utterance.channelBotName = currentBotName;
-          utterance.channelName = currentChannelName;
-          invoke("publishUtterance", utterance);
-
-          // Keep any remaining text after the last period
-          sentenceBuilder[0] = new StringBuilder(sentenceBuilder[0].substring(lastPeriodIndex + 1));
-        }
-      });
-
-      Response response = new Response("friend", getName(), result.toString(), null);
+      Response response = new Response("friend", getName(), responseText, null);
       invoke("publishResponse", response);
       return response;
 
@@ -308,6 +359,54 @@ public class LLM extends Service<LLMConfig> implements TextListener, TextPublish
     }
 
     return null;
+  }
+
+  public class StreamHandler implements OllamaStreamHandler {
+
+    final StringBuilder[] sentenceBuilder = { new StringBuilder() };
+    final int[] lastProcessedLength = { 0 }; // Track the length of already
+
+    @Override
+    public void accept(String message) {
+      final int MIN_SENTENCE_LENGTH = 5; // Minimum length for a valid sentence
+
+      // Append only the new portion of the text
+      String newText = message.substring(lastProcessedLength[0]);
+      sentenceBuilder[0].append(newText);
+
+      // Update the last processed length
+      lastProcessedLength[0] = message.length();
+
+      // Check for completed sentences in the accumulated text
+      int lastPeriodIndex = sentenceBuilder[0].lastIndexOf(".");
+      int lastQuestionIndex = sentenceBuilder[0].lastIndexOf("?");
+
+      // Use the last index of either punctuation as the sentence end
+      int lastSentenceEndIndex = Math.max(lastPeriodIndex, lastQuestionIndex);
+
+      if (lastSentenceEndIndex != -1) {
+        // Extract the potential sentence
+        String potentialSentence = sentenceBuilder[0].substring(0, lastSentenceEndIndex + 1).trim();
+
+        // Only process if the sentence is above the minimum length
+        if (potentialSentence.length() >= MIN_SENTENCE_LENGTH) {
+          invoke("publishText", potentialSentence);
+
+          Utterance utterance = new Utterance();
+          utterance.username = getName();
+          utterance.text = potentialSentence;
+          utterance.isBot = true;
+          utterance.channel = currentChannel;
+          utterance.channelType = currentChannelType;
+          utterance.channelBotName = currentBotName;
+          utterance.channelName = currentChannelName;
+          invoke("publishUtterance", utterance);
+
+          // Keep any remaining text after the last sentence-ending character
+          sentenceBuilder[0] = new StringBuilder(sentenceBuilder[0].substring(lastSentenceEndIndex + 1));
+        }
+      }
+    }
   }
 
   public Response getResponse(String text) {
@@ -321,7 +420,7 @@ public class LLM extends Service<LLMConfig> implements TextListener, TextPublish
         return null;
       }
 
-      if (config.stream) {
+      if (config.stream && !config.url.contains("openai")) {
         return getResponseStream(text);
       }
 
@@ -588,7 +687,22 @@ public class LLM extends Service<LLMConfig> implements TextListener, TextPublish
 
   @Override
   public void onImage(ImageData img) {
-    getImageResponse(img.src);
+    StringBuilder fileUrl = new StringBuilder();
+    if (img.encoding == null && img.src != null && (!img.src.startsWith("file://") && !img.src.startsWith("http://") && !img.src.startsWith("https://"))) {
+      if (img.src.startsWith("/") || img.src.contains(":\\")) {
+        // absolute path already
+        fileUrl.append("file://");
+        fileUrl.append(img.src);
+      } else {
+        // assume relative
+        File file = new File(img.src);
+        fileUrl.append("file://");
+        fileUrl.append(file.getAbsolutePath());
+      }
+    }
+    List<String> urls = new ArrayList<>();
+    urls.add(fileUrl.toString());
+    getResponse(urls);
   }
 
   public static void main(String[] args) {
@@ -598,17 +712,19 @@ public class LLM extends Service<LLMConfig> implements TextListener, TextPublish
 
       Response response = null;
       LLM llm = (LLM) Runtime.start("llm", "LLM");
-      
+      Runtime.start("python", "Python");
+
       WebGui webgui = (WebGui) Runtime.create("webgui", "WebGui");
       webgui.autoStartBrowser(false);
       webgui.startService();
 
+      Runtime.start("cv", "OpenCV");
+      
       boolean done = true;
       if (done) {
         return;
       }
-      
-      
+
       LLM imagellm = (LLM) Runtime.start("imagellm", "LLM");
 
       llm.config.url = "http://192.168.0.24:11434/v1/chat/completions";
@@ -618,7 +734,6 @@ public class LLM extends Service<LLMConfig> implements TextListener, TextPublish
       if (response != null) {
         System.out.println(response.msg);
       }
-
 
       OpenCV cv = (OpenCV) Runtime.start("cv", "OpenCV");
       cv.capture();

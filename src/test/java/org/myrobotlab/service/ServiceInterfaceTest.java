@@ -56,7 +56,7 @@ public class ServiceInterfaceTest extends AbstractTest {
 
   private boolean serviceInterfaceTest(String service) throws IOException {
     // see if we can start/stop and release the service.
-    
+
     // set a configuration path
     Runtime.setConfig("serviceInterfaceTest");
 
@@ -67,7 +67,7 @@ public class ServiceInterfaceTest extends AbstractTest {
     }
     System.out.println("Service Test:" + service);
 
-    if (service.equals("As5048AEncoder")){
+    if (service.equals("As5048AEncoder")) {
       log.info("here");
     }
 
@@ -85,7 +85,7 @@ public class ServiceInterfaceTest extends AbstractTest {
     foo.startService();
     foo.save();
     // foo.load(); SHOULD NOT BE USED !
-    // foo.apply(); <-  THIS SHOULD BE IMPLEMENTED
+    // foo.apply(); <- THIS SHOULD BE IMPLEMENTED
     foo.stopService();
 
     foo.releaseService();
@@ -103,9 +103,9 @@ public class ServiceInterfaceTest extends AbstractTest {
     ArrayList<String> servicesNotInServiceDataJson = new ArrayList<String>();
 
     HashSet<String> blacklist = new HashSet<String>();
-    blacklist.add("OpenNi");    
-    blacklist.add("As5048AEncoder");    
-    blacklist.add("IntegratedMovement");    
+    blacklist.add("OpenNi");
+    blacklist.add("As5048AEncoder");
+    blacklist.add("IntegratedMovement");
     blacklist.add("VirtualDevice");
     blacklist.add("Joystick");
     blacklist.add("GoogleAssistant");
@@ -113,6 +113,7 @@ public class ServiceInterfaceTest extends AbstractTest {
     blacklist.add("Python"); // python's interpreter cannot be restarted cleanly
     blacklist.add("Runtime");
     blacklist.add("OpenCV");
+    blacklist.add("LeapMotion2");
     blacklist.add("InMoov2");
     blacklist.add("WorkE");
     blacklist.add("JMonkeyEngine");
@@ -164,7 +165,7 @@ public class ServiceInterfaceTest extends AbstractTest {
         continue;
       }
       // log.info("Testing Service: {}", service);
-      
+
       System.out.println("testing " + service);
 
       MetaData st = ServiceData.getMetaData("org.myrobotlab.service." + service);

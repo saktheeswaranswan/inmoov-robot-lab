@@ -1096,7 +1096,7 @@ public class CodecUtils {
       String[] parts = path.split("/"); // <- this breaks things ! e.g.
                                         // /runtime/connect/"http://localhost:8888"
       // path parts less than 3 is a dir or ls
-      if (parts.length < 3) {
+      if (parts.length < 3 || (parts.length == 3 && path.endsWith("/"))) {
         // this morphs a path which has less than 3 parts
         // into a runtime "ls" method call to do reflection of services or
         // service methods
@@ -1109,7 +1109,7 @@ public class CodecUtils {
       }
 
       // ["", "runtime", "shutdown"]
-      if (parts.length == 3) {
+      if (parts.length == 3 && !path.endsWith("/")) {
         msg.name = parts[1];
         msg.method = parts[2];
         return msg;

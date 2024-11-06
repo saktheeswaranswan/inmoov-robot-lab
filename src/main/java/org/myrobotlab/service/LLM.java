@@ -87,9 +87,9 @@ public class LLM extends Service<LLMConfig> implements TextListener, TextPublish
   protected String currentChannelName;
 
   protected String currentChannelType;
-  
+
   transient protected OllamaAPI api = null;
-  
+
   protected String ollam4JUrl = "";
 
   protected Map<String, Object> inputs = new LinkedHashMap<>();
@@ -140,7 +140,7 @@ public class LLM extends Service<LLMConfig> implements TextListener, TextPublish
 
   }
 
-  OllamaAPI getOllamaApi() throws MalformedURLException { 
+  OllamaAPI getOllamaApi() throws MalformedURLException {
     if (api == null || ollam4JUrl == null || !ollam4JUrl.contentEquals(config.url)) {
       URL url = new URL(config.url);
       ollam4JUrl = config.url;
@@ -253,6 +253,7 @@ public class LLM extends Service<LLMConfig> implements TextListener, TextPublish
 
   /***
    * Converts images into a default chat completion prompt
+   * 
    * @param imageUrls
    * @return
    */
@@ -262,24 +263,25 @@ public class LLM extends Service<LLMConfig> implements TextListener, TextPublish
 
   /**
    * convert images to array of bytes
+   * 
    * @param text
    * @param imageUrls
    * @return
    */
   public Response getResponse(String text, List<String> imageUrls) {
-//    List<byte[]> bimages = null;
-//    if (images != null) {
-//      bimages = new ArrayList<>();
-//      for (String uri : images) {
-//        if (uri.startsWith("file://")) {
-//          try {
-//            bimages.add(readUriContent(uri));
-//          } catch (Exception e) {
-//            error(e);
-//          }
-//        }
-//      }
-//    }
+    // List<byte[]> bimages = null;
+    // if (images != null) {
+    // bimages = new ArrayList<>();
+    // for (String uri : images) {
+    // if (uri.startsWith("file://")) {
+    // try {
+    // bimages.add(readUriContent(uri));
+    // } catch (Exception e) {
+    // error(e);
+    // }
+    // }
+    // }
+    // }
     return getResponseStream(text, imageUrls);
   }
 
@@ -293,7 +295,7 @@ public class LLM extends Service<LLMConfig> implements TextListener, TextPublish
       if (config.sleeping) {
         return null;
       }
-      
+
       // Create and format date and time strings
       LocalDateTime currentDateTime = LocalDateTime.now();
       DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
@@ -341,27 +343,28 @@ public class LLM extends Service<LLMConfig> implements TextListener, TextPublish
       // files
 
       // tools (lame)
-      
+
       OptionsBuilder optionBuilder = new OptionsBuilder();
       Options options = optionBuilder.build();
-      
 
       OllamaChatRequestModel request = new OllamaChatRequestModel(config.model, msgList);
 
       OllamaAPI ollamaApi = getOllamaApi();
       String responseText = null;
-      
+
       if (imageUrls != null) {
-        OllamaResult result = ollamaApi.generateWithImageURLs(config.model, text,  imageUrls, options, handler);
+        OllamaResult result = ollamaApi.generateWithImageURLs(config.model, text, imageUrls, options, handler);
         responseText = result.getResponse();
       } else {
         OllamaChatResult result = ollamaApi.chat(request, handler);
         history.add(new OllamaChatMessage(OllamaChatMessageRole.ASSISTANT, result.getResponse()));
         responseText = result.getResponse();
       }
-      
-      // we are at the end of our response of streaming, and now the "result" will unblock signalling the end of the response
-      // now we have to check to see if there is any extra text on the end that did not get published
+
+      // we are at the end of our response of streaming, and now the "result"
+      // will unblock signalling the end of the response
+      // now we have to check to see if there is any extra text on the end that
+      // did not get published
       if (handler.sentenceBuilder[0] != null && handler.sentenceBuilder[0].toString().trim().length() > 0) {
         invoke("publishText", handler.sentenceBuilder[0].toString());
 
@@ -374,11 +377,10 @@ public class LLM extends Service<LLMConfig> implements TextListener, TextPublish
         utterance.channelBotName = currentBotName;
         utterance.channelName = currentChannelName;
         invoke("publishUtterance", utterance);
-        
-        
+
         Response response = new Response("friend", getName(), handler.sentenceBuilder[0].toString(), null);
         invoke("publishResponse", response);
-                
+
       }
 
       Response response = new Response("friend", getName(), responseText, null);
@@ -433,11 +435,9 @@ public class LLM extends Service<LLMConfig> implements TextListener, TextPublish
           utterance.channelBotName = currentBotName;
           utterance.channelName = currentChannelName;
           invoke("publishUtterance", utterance);
-          
-          
+
           Response response = new Response("friend", getName(), potentialSentence, null);
           invoke("publishResponse", response);
-
 
           // Keep any remaining text after the last sentence-ending character
           sentenceBuilder[0] = new StringBuilder(sentenceBuilder[0].substring(lastSentenceEndIndex + 1));
@@ -729,7 +729,14 @@ public class LLM extends Service<LLMConfig> implements TextListener, TextPublish
       if (img.src.startsWith("/") || img.src.contains(":\\")) {
         // absolute path already
         fileUrl.append("file://");
-        fileUrl.append(img.src);
+        // Windows :()
+        if (img.src != null) {
+          fileUrl.append(img.src.replace("\\", "/"));
+        }
+        if (img.source != null) {
+          fileUrl.append(img.source.replace("\\", "/"));
+        }
+
       } else {
         // assume relative
         File file = new File(img.src);
@@ -757,7 +764,7 @@ public class LLM extends Service<LLMConfig> implements TextListener, TextPublish
       webgui.startService();
 
       Runtime.start("cv", "OpenCV");
-      
+
       boolean done = true;
       if (done) {
         return;

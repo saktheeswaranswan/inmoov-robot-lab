@@ -1208,8 +1208,9 @@ public class InMoov2 extends Service<InMoov2Config>
    */
   public void onPirOn() {
     log.info("onPirOn");
-    // FIXME flash on config.flashOnBoot
-    invoke("publishFlash", "pir");
+    if (config.flashOnPir == true) {
+        invoke("publishFlash", "pir");
+      }
     ProgramAB chatBot = (ProgramAB) getPeer("chatBot");
     if (chatBot != null) {
       String botState = chatBot.getPredicate("botState");

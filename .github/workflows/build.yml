@@ -41,47 +41,42 @@ jobs:
       - name: Package with Maven
         run: "mvn package -DskipTests -Dversion=${{ steps.version.outputs.version }} -q"
 
-      # - name: Fake Build
-      #   run: |
-      #     mkdir -p target
-      #     echo ${{ github.sha }} > ./target/myrobotlab.zip
+      # - name: Pre Release
+      #   if: github.ref != 'refs/heads/develop'
+      #   id: prerelease
+      #   uses: softprops/action-gh-release@v1
+      #   with:
+      #     token: ${{ secrets.ACCESS_TOKEN }}
+      #     prerelease: true
+      #     files: ./target/myrobotlab.zip
+      #     name: "Pre ${{ steps.version.outputs.version }} Nixie"
+      #     tag_name: ${{ steps.version.outputs.version }}
+      #     generate_release_notes: true
+      #     body_path: ./release-template.md
 
-      - name: Pre Release
-        if: github.ref != 'refs/heads/develop'
-        id: prerelease
-        uses: softprops/action-gh-release@v1
-        with:
-          token: ${{ secrets.ACCESS_TOKEN }}
-          prerelease: true
-          files: ./target/myrobotlab.zip
-          name: "Pre ${{ steps.version.outputs.version }} Nixie"
-          tag_name: ${{ steps.version.outputs.version }}
-          generate_release_notes: true
-          body_path: ./release-template.md
+      # # - name: Publish Test Report
+      # #   if: success() || failure()
+      # #   uses: scacap/action-surefire-report@v1
 
-      # - name: Publish Test Report
-      #   if: success() || failure()
-      #   uses: scacap/action-surefire-report@v1
+      # - name: Add Coverage to PR
+      #   id: jacoco
+      #   uses: madrapps/jacoco-report@v1.6.1
+      #   with:
+      #     paths: |
+      #       ${{ github.workspace }}/target/site/jacoco/jacoco.xml
+      #     token: ${{ secrets.ACCESS_TOKEN }}
+      #     debug-mode: true
+      #     min-coverage-overall: 40
+      #     min-coverage-changed-files: 60
 
-      - name: Add Coverage to PR
-        id: jacoco
-        uses: madrapps/jacoco-report@v1.6.1
-        with:
-          paths: |
-            ${{ github.workspace }}/target/site/jacoco/jacoco.xml
-          token: ${{ secrets.ACCESS_TOKEN }}
-          debug-mode: true
-          min-coverage-overall: 40
-          min-coverage-changed-files: 60
-
-      - name: Release
-        if: github.ref == 'refs/heads/develop'
-        id: release
-        uses: softprops/action-gh-release@v1
-        with:
-          token: ${{ secrets.ACCESS_TOKEN }}
-          files: ./target/myrobotlab.zip
-          name: "${{ steps.version.outputs.version }} Nixie"
-          tag_name: ${{ steps.version.outputs.version }}
-          generate_release_notes: true
-          body_path: ./release-template.md
+      # - name: Release
+      #   if: github.ref == 'refs/heads/develop'
+      #   id: release
+      #   uses: softprops/action-gh-release@v1
+      #   with:
+      #     token: ${{ secrets.ACCESS_TOKEN }}
+      #     files: ./target/myrobotlab.zip
+      #     name: "${{ steps.version.outputs.version }} Nixie"
+      #     tag_name: ${{ steps.version.outputs.version }}
+      #     generate_release_notes: true
+      #     body_path: ./release-template.md

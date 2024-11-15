@@ -95,8 +95,6 @@ public class InMoov2Config extends ServiceConfig {
 
   public boolean pirEnableTracking = false;
 
-  public boolean pirOnFlash = true;
-
   /**
    * play pir sounds when pir switching states sound located in
    * data/InMoov2/sounds/pir-activated.mp3 sound located in

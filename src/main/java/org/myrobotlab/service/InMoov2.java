@@ -1309,7 +1309,9 @@ public class InMoov2 extends Service<InMoov2Config>
         configStarted = true;
       }
 
-      invoke("publishEvent", "STARTED " + peerKey.replace(".", " "));
+      if (config.reportOnBoot) {
+        invoke("publishEvent", "STARTED " + peerKey.replace(".", " "));
+      }
 
       switch (peerKey) {
         case "audioPlayer":

@@ -161,7 +161,7 @@ public class Jme3Util {
         nullUserData.add(name);
         return;
       } else if (o == null) {
-        log.info("{} not found");
+        log.info("{} not found", name);
         return;
       }
       

@@ -1240,21 +1240,21 @@ public class JMonkeyEngine extends Service<JMonkeyEngineConfig> implements Gatew
    * @return
    */
   public Spatial loadModel(String assetPath) {
-    JMonkeyEngineConfig c = (JMonkeyEngineConfig) config;
+    JMonkeyEngineConfig c = config;
     Spatial model = null;
     try {
       if (loadedModels.contains(assetPath)) {
-        log.info("model {} already loaded");
+        log.info("model {} already loaded", assetPath);
         return null;
       }
       
       if (FileIO.checkDir(modelsDir + fs + assetPath)) {
-        log.info("skipping directory {}");
+        log.info("skipping directory {}", modelsDir);
         return null;        
       }
       
       if (assetPath.toLowerCase().endsWith(".md") || assetPath.toLowerCase().endsWith(".txt") || assetPath.toLowerCase().endsWith(".bin")) {
-        log.info("skipping {} not and valid model type");
+        log.info("skipping {}: not a valid model type", assetPath);
         return null;
       }
       
@@ -1264,7 +1264,7 @@ public class JMonkeyEngine extends Service<JMonkeyEngineConfig> implements Gatew
       if (model != null) {
         getRootNode().attachChild(model);
       } else {
-        error("%s model null");
+        error("%s model null", assetPath);
       }
       
       if (c.models == null) {
@@ -2470,10 +2470,10 @@ public class JMonkeyEngine extends Service<JMonkeyEngineConfig> implements Gatew
       webgui.startService();
       
       
-      boolean done = true;
-      if (done) {
-        return;
-      }
+//      boolean done = true;
+//      if (done) {
+//        return;
+//      }
 
       Runtime.start("sim", "JMonkeyEngine");
 

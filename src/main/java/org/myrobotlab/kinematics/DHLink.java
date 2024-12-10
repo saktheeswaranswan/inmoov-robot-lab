@@ -169,14 +169,21 @@ public class DHLink implements Serializable {
   }
 
   // move to an angle
-  public void rotate(double angle) {
+
+  /**
+   *
+   * @param angle
+   * @return Whether the angle was in range
+   */
+  public boolean rotate(double angle) {
     // TODO: which parameter?
     if (DHLinkType.REVOLUTE.equals(this.type)) {
       if (angle <= max && angle >= min) {
         this.theta = angle;
       } else {
         // TODO: it's out of range!
-        log.info("Rotation out of range for link {}", angle);
+        log.info("Rotation out of range for link {}, max: {}, min: {}", angle, max, min);
+        return false;
       }
     }
     if (DHLinkType.REVOLUTE_ALPHA.equals(type)) {
@@ -184,12 +191,14 @@ public class DHLink implements Serializable {
         alpha = angle;
       } else {
         // TODO: it's out of range!
-        log.info("Rotation out of range for link {}", angle);
+        log.info("Rotation out of range for link {}, max: {}, min: {}", angle, max, min);
+        return false;
       }
     } else {
       // TODO: You can't rotate a prismatic joint!
       // TODO Throw something?
     }
+    return true;
   }
 
   public void translate(double d) {

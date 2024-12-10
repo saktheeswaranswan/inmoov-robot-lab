@@ -158,6 +158,13 @@ public abstract class Repo {
       // simulator"));
 
       remotes.add(new RemoteRepo("oss-snapshots-repo", "https://oss.sonatype.org/content/groups/public", "sphinx"));
+
+      // Motion planning
+      remotes.add(new RemoteRepo("owl-mvn-repo", "https://raw.github.com/idsc-frazzoli/owl/mvn-repo/", "motion planning", true));
+      remotes.add(new RemoteRepo("subare", "https://raw.github.com/idsc-frazzoli/subare/mvn-repo/", "motion planning", true));
+      remotes.add(new RemoteRepo("tensor-mvn-repo", "https://raw.github.com/idsc-frazzoli/tensor/mvn-repo/", "motion planning", true));
+      remotes.add(new RemoteRepo("ephemeral-mvn-repo", "https://raw.github.com/idsc-frazzoli/ephemeral/mvn-repo/", "motion planning", true));
+      remotes.add(new RemoteRepo("lcm-java-mvn-repo", "https://raw.github.com/idsc-frazzoli/lcm-java/mvn-repo/", "motion planning", true));
       // remotes.add(new RemoteRepo("alfresco",
       // "https://artifacts.alfresco.com/nexus/content/repositories/public",
       // "swinggui mxgraph"));

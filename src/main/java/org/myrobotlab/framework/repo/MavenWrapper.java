@@ -113,6 +113,12 @@ public class MavenWrapper extends Repo implements Serializable {
       sb.append("      <id>" + repo.id + "</id>\n");
       sb.append("      <name>" + repo.id + "</name>\n");
       sb.append("      <url>" + repo.url + "</url>\n");
+      if (repo.snapshots) {
+        sb.append("      <snapshots>\n");
+        sb.append("        <enabled>true</enabled>\n");
+        sb.append("        <updatePolicy>always</updatePolicy>\n");
+        sb.append("      </snapshots>\n");
+      }
       sb.append("    </repository>\n");
       ret.append(sb);
     }

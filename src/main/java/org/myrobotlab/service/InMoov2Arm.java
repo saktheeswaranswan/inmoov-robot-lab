@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.myrobotlab.framework.Service;
@@ -13,6 +14,7 @@ import org.myrobotlab.kinematics.DHRobotArm;
 import org.myrobotlab.logging.LoggerFactory;
 import org.myrobotlab.math.MathUtils;
 import org.myrobotlab.service.config.InMoov2ArmConfig;
+import org.myrobotlab.service.data.PlanningStateTime;
 import org.myrobotlab.service.interfaces.IKJointAngleListener;
 import org.myrobotlab.service.interfaces.ServoControl;
 import org.slf4j.Logger;
@@ -199,6 +201,10 @@ public class InMoov2Arm extends Service<InMoov2ArmConfig> implements IKJointAngl
     return rotate;
   }
 
+  public String getSide() {
+    return getName().contains("left") ? "left" : "right";
+  }
+
   public String getScript(String service) {
     String side = getName().contains("left") ? "left" : "right";
     return String.format("%s.moveArm(\"%s\",%.0f,%.0f,%.0f,%.0f)\n", service, side, bicep.getCurrentInputPos(), rotate.getCurrentInputPos(),
@@ -222,10 +228,26 @@ public class InMoov2Arm extends Service<InMoov2ArmConfig> implements IKJointAngl
   }
 
   public void moveToBlocking(double bicep, double rotate, double shoulder, double omoplate) {
-    log.info("init {} moveToBlocking", getName());
+    log.info("init {} moveToBlocking {}, {}, {}, {}", getName(), bicep, rotate, shoulder, omoplate);
     moveTo(bicep, rotate, shoulder, omoplate);
     waitTargetPos();
     log.info("end {} moveToBlocking", getName());
+  }
+
+
+  public void moveToPlanned(List<PlanningStateTime> plan) {
+    DHRobotArm arm = getDHRobotArm(getName(), getSide());
+    for (PlanningStateTime state : plan) {
+      moveToBlocking(
+              Math.toDegrees(state.get(0)) + arm.getLink(0).getOffset(),
+              Math.toDegrees(state.get(1)) + arm.getLink(1).getOffset(),
+              Math.toDegrees(state.get(2)) + arm.getLink(2).getOffset(),
+              Math.toDegrees(state.get(3)) + arm.getLink(3).getOffset());
+    }
+  }
+
+  public void onPlan(List<PlanningStateTime> plan) {
+    moveToPlanned(plan);
   }
 
   @Override

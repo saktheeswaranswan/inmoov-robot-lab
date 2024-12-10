@@ -127,6 +127,56 @@
       <name>oss-snapshots-repo</name>
       <url>https://oss.sonatype.org/content/groups/public</url>
     </repository>
+    <!-- null -->
+    <repository>
+      <id>owl-mvn-repo</id>
+      <name>owl-mvn-repo</name>
+      <url>https://raw.github.com/idsc-frazzoli/owl/mvn-repo/</url>
+      <snapshots>
+        <enabled>true</enabled>
+        <updatePolicy>always</updatePolicy>
+      </snapshots>
+    </repository>
+    <!-- null -->
+    <repository>
+      <id>subare</id>
+      <name>subare</name>
+      <url>https://raw.github.com/idsc-frazzoli/subare/mvn-repo/</url>
+      <snapshots>
+        <enabled>true</enabled>
+        <updatePolicy>always</updatePolicy>
+      </snapshots>
+    </repository>
+    <!-- null -->
+    <repository>
+      <id>tensor-mvn-repo</id>
+      <name>tensor-mvn-repo</name>
+      <url>https://raw.github.com/idsc-frazzoli/tensor/mvn-repo/</url>
+      <snapshots>
+        <enabled>true</enabled>
+        <updatePolicy>always</updatePolicy>
+      </snapshots>
+    </repository>
+    <!-- null -->
+    <repository>
+      <id>ephemeral-mvn-repo</id>
+      <name>ephemeral-mvn-repo</name>
+      <url>https://raw.github.com/idsc-frazzoli/ephemeral/mvn-repo/</url>
+      <snapshots>
+        <enabled>true</enabled>
+        <updatePolicy>always</updatePolicy>
+      </snapshots>
+    </repository>
+    <!-- null -->
+    <repository>
+      <id>lcm-java-mvn-repo</id>
+      <name>lcm-java-mvn-repo</name>
+      <url>https://raw.github.com/idsc-frazzoli/lcm-java/mvn-repo/</url>
+      <snapshots>
+        <enabled>true</enabled>
+        <updatePolicy>always</updatePolicy>
+      </snapshots>
+    </repository>
     <!-- Discord Bot - m2-dv8tion -->
     <repository>
       <id>dv8tion</id>
@@ -988,6 +1038,15 @@
       <scope>provided</scope>
     </dependency>
     <!-- MarySpeech end -->
+
+    <!-- MotionPlanning begin -->
+    <dependency>
+      <groupId>ch.ethz.idsc</groupId>
+      <artifactId>owl</artifactId>
+      <version>0.5.9</version>
+      <scope>provided</scope>
+    </dependency>
+    <!-- MotionPlanning end -->
 
     <!-- Mqtt begin -->
     <dependency>

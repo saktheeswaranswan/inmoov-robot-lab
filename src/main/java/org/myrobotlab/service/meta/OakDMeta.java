@@ -15,7 +15,7 @@ public class OakDMeta extends MetaData {
    */
   public OakDMeta() {
 
-    addDescription("Control a Neopixel hardware");
+    addDescription("Control a Oak-D hardware");
     setAvailable(true); // false if you do not want it viewable in a
     addCategory("control", "display");
 

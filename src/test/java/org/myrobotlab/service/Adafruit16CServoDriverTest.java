@@ -1,8 +1,5 @@
 package org.myrobotlab.service;
 
-import static org.myrobotlab.service.Adafruit16CServoDriver.SERVOMAX;
-import static org.myrobotlab.service.Adafruit16CServoDriver.SERVOMIN;
-
 import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -37,6 +34,10 @@ public class Adafruit16CServoDriverTest extends AbstractTest {
 
     arduino.connect("COM99");
     driver.attach(arduino);
+    
+    int SERVOMIN = driver.SERVOMIN;
+    int SERVOMAX = driver.SERVOMAX;
+
 
     driver.setServo(0, SERVOMIN);
     driver.setServo(0, SERVOMAX);

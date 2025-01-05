@@ -25,8 +25,11 @@
 
 package org.myrobotlab.service;
 
+import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -56,6 +59,9 @@ import org.myrobotlab.service.interfaces.AudioControl;
 import org.myrobotlab.service.interfaces.AudioListener;
 import org.myrobotlab.service.interfaces.AudioPublisher;
 import org.slf4j.Logger;
+
+import javazoom.jl.player.Player;
+
 /**
  * 
  * AudioFile - This service can be used to play an audio file such as an mp3.
@@ -123,7 +129,9 @@ public class AudioFile extends Service<AudioFileConfig> implements AudioPublishe
   transient Map<String, AudioProcessor> processors = new HashMap<String, AudioProcessor>();
 
   final private transient PlaylistPlayer playlistPlayer = new PlaylistPlayer(this);
-  
+
+  private transient Player streamPlayer = null;
+
   /**
    * last file played
    */
@@ -134,13 +142,13 @@ public class AudioFile extends Service<AudioFileConfig> implements AudioPublishe
       attachAudioListener(attachable.getName());
     }
   }
-  
+
   public void attach(AudioListener listener) {
     attachAudioListener(listener.getName());
   }
-  
+
   public void setPeakMultiplier(double peakMultiplier) {
-    AudioFileConfig c = (AudioFileConfig)config;
+    AudioFileConfig c = (AudioFileConfig) config;
     c.peakMultiplier = peakMultiplier;
   }
 
@@ -173,6 +181,9 @@ public class AudioFile extends Service<AudioFileConfig> implements AudioPublishe
       p.interrupt();
     }
     playlistPlayer.stop();
+    if (streamPlayer != null) {
+      streamPlayer.close();
+    }
   }
 
   public AudioData play(String filename) {
@@ -184,7 +195,8 @@ public class AudioFile extends Service<AudioFileConfig> implements AudioPublishe
     return play(filename, blocking, null, null);
   }
 
-  public AudioData play(String filename, boolean blocking, Integer repeat, String track) {
+  public AudioData play(final String uri, boolean blocking, Integer repeat, String track) {
+    String filename = uri;
 
     log.info("Play called for Filename {}", filename);
     if (track == null || track.isEmpty()) {
@@ -197,6 +209,34 @@ public class AudioFile extends Service<AudioFileConfig> implements AudioPublishe
     }
 
     if (filename.toLowerCase().startsWith("http:") || filename.toLowerCase().startsWith("https:")) {
+
+      if (config.stream) {
+        try {
+
+          Thread playbackThread = new Thread(() -> {
+            try (InputStream input = new BufferedInputStream(new URL(uri).openStream())) {
+              streamPlayer = new Player(input);
+              System.out.println("Playing stream: " + uri);
+              streamPlayer.play(); // Playback happens here
+            } catch (Exception e) {
+              System.err.println("Error playing stream: " + e.getMessage());
+              e.printStackTrace();
+            }
+          });
+          playbackThread.start();
+
+          AudioData data = new AudioData(filename);
+          data.mode = blocking ? AudioData.MODE_BLOCKING : AudioData.MODE_QUEUED;
+          data.track = track;
+          data.repeat = repeat;
+          return data;
+        } catch (Exception e) {
+          System.err.println("Error playing stream: " + e.getMessage());
+          e.printStackTrace();
+          return null;
+        }
+      }
+
       // make cache directory if it doesn't exist
       File check = new File(getDataDir() + fs + "cache");
       if (!check.exists()) {
@@ -325,6 +365,10 @@ public class AudioFile extends Service<AudioFileConfig> implements AudioPublishe
       // In your case, an other loop.
     }
     playlistPlayer.stop();
+    if (streamPlayer != null) {
+      streamPlayer.close();
+    }
+
   }
 
   /*
@@ -371,6 +415,9 @@ public class AudioFile extends Service<AudioFileConfig> implements AudioPublishe
       ap.pause(false); // FIXME me shouldn't it be true ?
       ap.stopPlaying();
     }
+    if (streamPlayer != null) {
+      streamPlayer.close();
+    }
   }
 
   // FIXME - implement ???
@@ -396,11 +443,11 @@ public class AudioFile extends Service<AudioFileConfig> implements AudioPublishe
   @Override
   public void releaseService() {
     super.releaseService();
-    for (AudioProcessor processor: processors.values()) {
+    for (AudioProcessor processor : processors.values()) {
       processor.stopPlaying();
     }
   }
-  
+
   public AudioData repeat(String filename) {
     return repeat(filename, -1);
   }
@@ -544,6 +591,9 @@ public class AudioFile extends Service<AudioFileConfig> implements AudioPublishe
 
   public void stopPlaylist() {
     playlistPlayer.stop();
+    if (streamPlayer != null) {
+      streamPlayer.close();
+    }
   }
 
   public void skip() {
@@ -554,7 +604,7 @@ public class AudioFile extends Service<AudioFileConfig> implements AudioPublishe
     log.debug("publishPeak {}", peak);
     return peak;
   }
-  
+
   public static void main(String[] args) {
 
     try {
@@ -566,7 +616,7 @@ public class AudioFile extends Service<AudioFileConfig> implements AudioPublishe
       Runtime.start("python", "Python");
 
       AudioFile player = (AudioFile) Runtime.start("player", "AudioFile");
-      
+
       // Audio stream
       // player.play("http://icecast.radiofrance.fr/fip-midfi.mp3");
       player.play("https://upload.wikimedia.org/wikipedia/commons/1/1f/Bach_-_Brandenburg_Concerto.No.1_in_F_Major-_II._Adagio.ogg");
@@ -596,7 +646,7 @@ public class AudioFile extends Service<AudioFileConfig> implements AudioPublishe
   public void onPlayAudioFile(String file) {
     play(file);
   }
-  
+
   @Override
   public void onPlayRandomAudioFile(String dir) {
     playRandom(dir);
@@ -604,6 +654,7 @@ public class AudioFile extends Service<AudioFileConfig> implements AudioPublishe
 
   /**
    * Plays a random audio file
+   * 
    * @param dir
    */
   public void playRandom(String dir) {
@@ -612,22 +663,22 @@ public class AudioFile extends Service<AudioFileConfig> implements AudioPublishe
       error("%s is not a valid dir");
       return;
     }
-    
+
     File[] files = test.listFiles();
-    
+
     if (files.length == 0) {
       error("%s contains no files", dir);
       return;
     }
-    
+
     Random rand = new Random();
-    File randomFile = files[rand.nextInt(files.length-1)];
+    File randomFile = files[rand.nextInt(files.length - 1)];
     play(randomFile.getAbsolutePath());
-    
+
   }
-  
+
   public double getPeakMultiplier() {
-    return ((AudioFileConfig)config).peakMultiplier;
+    return ((AudioFileConfig) config).peakMultiplier;
   }
 
 }

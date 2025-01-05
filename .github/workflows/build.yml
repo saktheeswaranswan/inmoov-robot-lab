@@ -1,5 +1,4 @@
-# This file must be in the .github/workflows folder for git actions to work
-# but currently is disabled, since builds are being done by jenkins
+# This file must be in the .github/workflows folder for GitHub Actions to work
 name: Java CI
 
 on:
@@ -16,11 +15,9 @@ jobs:
 
       - name: Set up JDK 11
         uses: actions/setup-java@v3
-
         with:
           java-version: "11"
           distribution: "adopt"
-          # NEATO ! CACHE !!!!
           cache: "maven"
 
       - name: Install Missing Dependencies
@@ -28,7 +25,8 @@ jobs:
 
       - name: Dependency Test # installs all dependencies
         run: mvn test -Dtest=org.myrobotlab.framework.DependencyTest -q
-      - name: Build with Maven # currently cannot test opencv
+
+      - name: Build with Maven # currently cannot test OpenCV
         run: mvn clean verify -q -DskipTests
 
       - name: Get next version
@@ -39,44 +37,25 @@ jobs:
           increment: patch
 
       - name: Package with Maven
-        run: "mvn package -DskipTests -Dversion=${{ steps.version.outputs.version }} -q"
+        run: mvn package -q -DskipTests -Dversion=${{ steps.version.outputs.version }} -q
 
-      # - name: Pre Release
-      #   if: github.ref != 'refs/heads/develop'
-      #   id: prerelease
-      #   uses: softprops/action-gh-release@v1
-      #   with:
-      #     token: ${{ secrets.ACCESS_TOKEN }}
-      #     prerelease: true
-      #     files: ./target/myrobotlab.zip
-      #     name: "Pre ${{ steps.version.outputs.version }} Nixie"
-      #     tag_name: ${{ steps.version.outputs.version }}
-      #     generate_release_notes: true
-      #     body_path: ./release-template.md
+      - name: Rename Artifact
+        run: mv target/myrobotlab.zip target/myrobotlab-${{ steps.version.outputs.version }}.zip
 
-      # # - name: Publish Test Report
-      # #   if: success() || failure()
-      # #   uses: scacap/action-surefire-report@v1
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
 
-      # - name: Add Coverage to PR
-      #   id: jacoco
-      #   uses: madrapps/jacoco-report@v1.6.1
-      #   with:
-      #     paths: |
-      #       ${{ github.workspace }}/target/site/jacoco/jacoco.xml
-      #     token: ${{ secrets.ACCESS_TOKEN }}
-      #     debug-mode: true
-      #     min-coverage-overall: 40
-      #     min-coverage-changed-files: 60
+      - name: Upload Artifact to S3
+        run: |
+          FILE="target/myrobotlab-${{ steps.version.outputs.version }}.zip"
+          BUCKET="myrobotlab-repo"
 
-      # - name: Release
-      #   if: github.ref == 'refs/heads/develop'
-      #   id: release
-      #   uses: softprops/action-gh-release@v1
-      #   with:
-      #     token: ${{ secrets.ACCESS_TOKEN }}
-      #     files: ./target/myrobotlab.zip
-      #     name: "${{ steps.version.outputs.version }} Nixie"
-      #     tag_name: ${{ steps.version.outputs.version }}
-      #     generate_release_notes: true
-      #     body_path: ./release-template.md
+          echo "Uploading $FILE to S3 bucket $BUCKET..."
+          aws s3 cp "$FILE" "s3://$BUCKET/" --acl public-read
+
+          echo "Updating permalink myrobotlab.zip..."
+          aws s3 cp "$FILE" "s3://$BUCKET/myrobotlab.zip" --acl public-read

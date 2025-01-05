@@ -59,3 +59,47 @@ jobs:
 
           echo "Updating permalink myrobotlab.zip..."
           aws s3 cp "$FILE" "s3://$BUCKET/myrobotlab.zip" --acl public-read
+
+      - name: Upload Artifact for Release
+        uses: actions/upload-artifact@v3
+        with:
+          name: myrobotlab
+          path: target/myrobotlab-${{ steps.version.outputs.version }}.zip
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Download Artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: myrobotlab
+          path: target/
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          tag_name: ${{ needs.build.outputs.version }}
+          name: "MyRobotLab Nixie ${{ needs.build.outputs.version }}"
+          body: |
+            ## MyRobotLab Nixie Release
+
+            Open Source Framework for Robotics and Creative Machine Control  
+            *You know, for robots!*
+
+            * Project Website: [MyRobotLab.org](http://myrobotlab.org)  
+            * Project Discord: [Join here](https://discord.gg/AfScp5x8r5)  
+            * Download Built Application: [Nixie ${{ needs.build.outputs.version }}](https://myrobotlab-repo.s3.amazonaws.com/myrobotlab-${{ needs.build.outputs.version }}.zip)  
+            * [JavaDocs](https://build.myrobotlab.org:8443/job/myrobotlab/job/develop/$build/artifact/target/site/apidocs/org/myrobotlab/service/package-summary.html)  
+
+            ## Base Requirements
+            You will need **Java 11 or newer**. If you are only running MyRobotLab, you need the JRE (Java Runtime Environment).  
+            If you are building from source, you will need the JDK (Java Development Kit). Oracle or OpenJDK will work.
+
+          files: target/myrobotlab-${{ needs.build.outputs.version }}.zip
+          draft: false
+          prerelease: false

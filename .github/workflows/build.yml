@@ -9,6 +9,9 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
+    outputs:
+      version: ${{ steps.version.outputs.version }} # Make version an output
+
     steps:
       - uses: actions/checkout@v3
 
@@ -25,11 +28,8 @@ jobs:
       - name: Dependency Test
         run: mvn test -Dtest=org.myrobotlab.framework.DependencyTest -q
 
-      # - name: Build with Maven
-      #   run: mvn clean verify -q -DskipTests
-
       - name: Get next version
-        id: version
+        id: version # ID needed to reference in outputs
         uses: reecetech/version-increment@2023.9.3
         with:
           scheme: semver
@@ -69,8 +69,8 @@ jobs:
         run: |
           git config --global user.name "GitHub Actions"
           git config --global user.email "github-actions@github.com"
-          git tag -a "${{ steps.version.outputs.version }}" -m "Release ${{ steps.version.outputs.version }}"
-          git push origin "${{ steps.version.outputs.version }}"
+          git tag -a "v${{ steps.version.outputs.version }}" -m "Release v${{ steps.version.outputs.version }}"
+          git push origin "v${{ steps.version.outputs.version }}"
 
   release:
     needs: build
@@ -89,8 +89,8 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          tag_name: ${{ needs.build.outputs.version }}
-          name: "MyRobotLab Nixie ${{ needs.build.outputs.version }}"
+          tag_name: "v${{ needs.build.outputs.version }}" # Ensure correct reference
+          name: "MyRobotLab Nixie v${{ needs.build.outputs.version }}"
           body: |
             ## MyRobotLab Nixie Release
 
@@ -99,7 +99,7 @@ jobs:
 
             * Project Website: [MyRobotLab.org](http://myrobotlab.org)  
             * Project Discord: [Join here](https://discord.gg/AfScp5x8r5)  
-            * Download Built Application: [Nixie ${{ needs.build.outputs.version }}](https://myrobotlab-repo.s3.amazonaws.com/myrobotlab-${{ needs.build.outputs.version }}.zip)  
+            * Download Built Application: [Nixie v${{ needs.build.outputs.version }}](https://myrobotlab-repo.s3.amazonaws.com/myrobotlab-${{ needs.build.outputs.version }}.zip)  
             * [JavaDocs](https://build.myrobotlab.org:8443/job/myrobotlab/job/develop/$build/artifact/target/site/apidocs/org/myrobotlab/service/package-summary.html)  
 
             ## Base Requirements

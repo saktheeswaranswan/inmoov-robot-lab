@@ -52,4 +52,9 @@ public class AudioFileConfig extends ServiceConfig {
    * resets the peak to 0 after this many milliseconds
    */
   public Long publishPeakResetDelayMs = 100L;
+  
+  /**
+   * stream a http/https radio
+   */
+  public boolean stream = false;
 }

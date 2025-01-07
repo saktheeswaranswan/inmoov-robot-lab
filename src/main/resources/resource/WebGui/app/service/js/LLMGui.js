@@ -10,7 +10,7 @@ angular.module("mrlapp.service.LLMGui", []).controller("LLMGuiCtrl", [
     $scope.text = null
     $scope.type = "Ollama"
     $scope.openaiModels = ["gpt-4o", "gpt-4-turbo", "gpt-4", "gpt-3.5-turbo"]
-    $scope.ollamaModels = ["llama3", "llama2", "phi3", "mistral", "jemma", "mixtral", "llava"]
+    $scope.ollamaModels = ["llama3.3", "llama3.2", "llama3.2-vision", "llama3", "llama2", "phi3", "mistral", "gemma", "gemma2", "mixtral", "llava", "llava-llama3", "bakllava", "qwq", "qwen"]
     var first = true
     $scope.dirty = false
 
@@ -71,7 +71,7 @@ angular.module("mrlapp.service.LLMGui", []).controller("LLMGuiCtrl", [
           $scope.$apply()
           break
         case "onImageRequest":
-          request = { username: "friend", text: data.prompt, img: 'data:image/jpeg;base64,' + data.base64Image }
+          request = { username: "friend", text: data.prompt, img: "data:image/jpeg;base64," + data.base64Image }
           $scope.utterances.push(request)
           // remove the beginning if we are at maxRecords
           if ($scope.utterances.length > $scope.maxRecords) {

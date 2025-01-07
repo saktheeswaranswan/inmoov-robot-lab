@@ -1,5 +1,3 @@
-# This file must be in the .github/workflows folder for git actions to work
-# but currently is disabled, since builds are being done by jenkins
 name: Java CI
 
 on:
@@ -11,72 +9,103 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
+    outputs:
+      version: ${{ steps.version.outputs.version }} # Make version an output
+
     steps:
       - uses: actions/checkout@v3
 
       - name: Set up JDK 11
         uses: actions/setup-java@v3
-
         with:
           java-version: "11"
           distribution: "adopt"
-          # NEATO ! CACHE !!!!
           cache: "maven"
 
       - name: Install Missing Dependencies
         run: sudo apt-get install -y libv4l-0 ffmpeg
 
-      - name: Dependency Test # installs all dependencies
+      - name: Dependency Test
         run: mvn test -Dtest=org.myrobotlab.framework.DependencyTest -q
-      - name: Build with Maven # currently cannot test opencv
-        run: mvn clean verify -q -DskipTests
 
       - name: Get next version
+        id: version # ID needed to reference in outputs
         uses: reecetech/version-increment@2023.9.3
-        id: version
         with:
           scheme: semver
           increment: patch
 
       - name: Package with Maven
-        run: "mvn package -DskipTests -Dversion=${{ steps.version.outputs.version }} -q"
+        run: mvn clean package -q -DskipTests -Dversion=${{ steps.version.outputs.version }} -q
 
-      # - name: Pre Release
-      #   if: github.ref != 'refs/heads/develop'
-      #   id: prerelease
-      #   uses: softprops/action-gh-release@v1
-      #   with:
-      #     token: ${{ secrets.ACCESS_TOKEN }}
-      #     prerelease: true
-      #     files: ./target/myrobotlab.zip
-      #     name: "Pre ${{ steps.version.outputs.version }} Nixie"
-      #     tag_name: ${{ steps.version.outputs.version }}
-      #     generate_release_notes: true
-      #     body_path: ./release-template.md
+      - name: Rename Artifact
+        run: mv target/myrobotlab.zip target/myrobotlab-${{ steps.version.outputs.version }}.zip
 
-      # # - name: Publish Test Report
-      # #   if: success() || failure()
-      # #   uses: scacap/action-surefire-report@v1
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
 
-      # - name: Add Coverage to PR
-      #   id: jacoco
-      #   uses: madrapps/jacoco-report@v1.6.1
-      #   with:
-      #     paths: |
-      #       ${{ github.workspace }}/target/site/jacoco/jacoco.xml
-      #     token: ${{ secrets.ACCESS_TOKEN }}
-      #     debug-mode: true
-      #     min-coverage-overall: 40
-      #     min-coverage-changed-files: 60
+      - name: Upload Artifact to S3
+        run: |
+          FILE="target/myrobotlab-${{ steps.version.outputs.version }}.zip"
+          BUCKET="myrobotlab-repo"
 
-      # - name: Release
-      #   if: github.ref == 'refs/heads/develop'
-      #   id: release
-      #   uses: softprops/action-gh-release@v1
-      #   with:
-      #     token: ${{ secrets.ACCESS_TOKEN }}
-      #     files: ./target/myrobotlab.zip
-      #     name: "${{ steps.version.outputs.version }} Nixie"
-      #     tag_name: ${{ steps.version.outputs.version }}
-      #     generate_release_notes: true
-      #     body_path: ./release-template.md
+          echo "Uploading $FILE to S3 bucket $BUCKET..."
+          aws s3 cp "$FILE" "s3://$BUCKET/" --acl public-read
+
+          echo "Updating permalink myrobotlab.zip..."
+          aws s3 cp "$FILE" "s3://$BUCKET/myrobotlab.zip" --acl public-read
+
+      - name: Upload Artifact for Release
+        uses: actions/upload-artifact@v3
+        with:
+          name: myrobotlab
+          path: target/myrobotlab-${{ steps.version.outputs.version }}.zip
+
+      - name: Create and Push Git Tag
+        run: |
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "github-actions@github.com"
+          git tag -a "v${{ steps.version.outputs.version }}" -m "Release v${{ steps.version.outputs.version }}"
+          git push origin "v${{ steps.version.outputs.version }}"
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Download Artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: myrobotlab
+          path: target/
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          tag_name: "v${{ needs.build.outputs.version }}" # Ensure correct reference
+          name: "MyRobotLab Nixie v${{ needs.build.outputs.version }}"
+          body: |
+            ## MyRobotLab Nixie Release
+
+            Open Source Framework for Robotics and Creative Machine Control  
+            *You know, for robots!*
+
+            * Project Website: [MyRobotLab.org](http://myrobotlab.org)  
+            * Project Discord: [Join here](https://discord.gg/AfScp5x8r5)  
+            * Download Built Application: [Nixie v${{ needs.build.outputs.version }}](https://myrobotlab-repo.s3.amazonaws.com/myrobotlab-${{ needs.build.outputs.version }}.zip)  
+            * [JavaDocs](https://build.myrobotlab.org:8443/job/myrobotlab/job/develop/$build/artifact/target/site/apidocs/org/myrobotlab/service/package-summary.html)  
+
+            ## Base Requirements
+            You will need **Java 11 or newer**. If you are only running MyRobotLab, you need the JRE (Java Runtime Environment).  
+            If you are building from source, you will need the JDK (Java Development Kit). Oracle or OpenJDK will work.
+
+          files: target/myrobotlab-${{ needs.build.outputs.version }}.zip
+          draft: false
+          prerelease: false

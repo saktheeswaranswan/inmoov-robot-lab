@@ -95,7 +95,7 @@ public class Status implements Serializable {// extends Exception {
 
   public static Status warn(String msg) {
     Status s = new Status(msg);
-    s.level = ERROR;
+    s.level = WARN;
     return s;
   }
 

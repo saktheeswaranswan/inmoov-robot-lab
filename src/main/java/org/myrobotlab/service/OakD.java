@@ -19,8 +19,7 @@ import org.slf4j.Logger;
 
 /**
  * 
- * https://github.com/luxonis/depthai
- * python3 depthai_demo.py -cb callbacks.py
+ * https://github.com/luxonis/depthai python3 depthai_demo.py -cb callbacks.py
  * 
  * https://github.com/luxonis/depthai-experiments/tree/master/gen2-face-recognition
  * 
@@ -69,8 +68,8 @@ public class OakD extends Service<OakDConfig> {
 
       // git.clone("./", config.depthaiCloneUrl)
       List<String> packages = new ArrayList<>();
-      packages.add("depthai==2.20.2.0");
-      packages.add("depthai_sdk==1.1.8");
+      packages.add("depthai_sdk==1.15.1");
+      packages.add("depthai==2.29.0");
       packages.add("blobconverter==1.4.3");
       packages.add("opencv-python");
       packages.add("numpy");
@@ -80,19 +79,19 @@ public class OakD extends Service<OakDConfig> {
     }
     // py4j.exec("");
   }
-  
+
   public void startRecognition() {
-    
+
   }
-  
+
   public void stopRecognition() {
-    
+
   }
-  
+
   /**
-   * FIXME - turn into interface
-   * Will publish processing messages to the processor(s) currently 
-   * subscribed.
+   * FIXME - turn into interface Will publish processing messages to the
+   * processor(s) currently subscribed.
+   * 
    * @param method
    * @param data
    */
@@ -103,9 +102,8 @@ public class OakD extends Service<OakDConfig> {
   }
 
   /**
-   * FIXME - turn into interface
-   * Processing publishing point, where everything InMoov2 wants to be processed
-   * is turned into a message and published.
+   * FIXME - turn into interface Processing publishing point, where everything
+   * InMoov2 wants to be processed is turned into a message and published.
    * 
    * @param msg
    * @return
@@ -114,7 +112,6 @@ public class OakD extends Service<OakDConfig> {
     return msg;
   }
 
-  
   public Classification publishClassification(Classification classification) {
     classification.src = getName();
     // we have a detection or recognition event ... publish the associated image
@@ -123,19 +120,19 @@ public class OakD extends Service<OakDConfig> {
       // imageToWeb("classification.png");
       invoke("imageToWeb", "classification.png");
     }
-    
+
     return classification;
   }
-  
+
   public String imageToWeb(String filePath) {
     byte[] content = null;
     try (FileInputStream fileInputStream = new FileInputStream(new File(filePath))) {
-        content = new byte[(int) new File(filePath).length()];
-        fileInputStream.read(content);
-        String img = Base64.getEncoder().encodeToString(content);
-        return String.format("data:image/png;base64,%s", img);
+      content = new byte[(int) new File(filePath).length()];
+      fileInputStream.read(content);
+      String img = Base64.getEncoder().encodeToString(content);
+      return String.format("data:image/png;base64,%s", img);
     } catch (IOException e) {
-        error(e);
+      error(e);
     }
     return null;
   }

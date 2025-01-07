@@ -155,26 +155,26 @@ public class Adafruit16CServoDriver extends Service<Adafruit16CServoDriverConfig
   // want these to be as small/large as possible without hitting the hard stop
   // for max range. You'll have to tweak them as necessary to match the servos
   // you have!
-  //
-  public final static int SERVOMIN = 150; // this
-  // is
-  // the
-  // 'minimum'
-  // pulse
-  // length count (out of 4096)
-  public final static int SERVOMAX = 600; // this
-  // is
-  // the
-  // 'maximum'
-  // pulse
-  // length count (out of 4096)
+  public int SERVOMIN = 150; // this is the 'minimum' pulse length count
+                                    // (out of 4096)
+  // @60Hz this equates to 610uS
+  public int SERVOMAX = 600; // this is the 'maximum' pulse length count
+                                    // (out of 4096)
+  // @60Hz this equates to 2441uS
+
+  // Servo min and max Pulse width
+  final static int servoMinPulseWidth = 500; // in micro seconds
+  final static int servoMaxPulseWidth = 2500; // in micro seconds
 
   transient public I2CController controller;
 
   // Constant for default PWM freqency
   private static int defaultPwmFreq = 60;
   final static int minPwmFreq = 24;
-  final static int maxPwmFreq = 1526;
+  // Servos us a PWM signal with a pulse width between 500uS and 2500uS.
+  // Allowing for 500uS the latest digital servos gives us a max frequence of
+  // 333 Hz
+  final static int maxPwmFreq = 333;
 
   int pwmFreq;
   boolean pwmFreqSet = false;
@@ -216,16 +216,15 @@ public class Adafruit16CServoDriver extends Service<Adafruit16CServoDriverConfig
   public static final int PCA9685_LED0_OFF_H = 0x09; // First LED addressHigh
 
   public static final int PCA9685_ALL_LED_OFF_H = 0xFD; // All call i2c address
-  // ( Used for shutdown
-  // of all pwm )
+  // ( Used for shutdown of all pwm )
   public static final int PCA9685_TURN_ALL_LED_OFF = 0x10; // Command to turn
-  // all LED off stop
-  // pwm )
+  // all LED off stop pwm )
 
   // public static final int PWM_FREQ = 60; // default frequency for servos
   public static final float osc_clock = 25000000; // clock frequency of the
   // internal clock
   public static final float precision = 4096; // pwm_precision
+  float freqAdjust = (float) 0.9;
 
   /**
    * i2c controller
@@ -360,11 +359,37 @@ public class Adafruit16CServoDriver extends Service<Adafruit16CServoDriverConfig
     byte[] buffer = { (byte) (PCA9685_LED0_ON_L + (pin * 4)), (byte) (pulseWidthOn & 0xff), (byte) (pulseWidthOn >> 8), (byte) (pulseWidthOff & 0xff),
         (byte) (pulseWidthOff >> 8) };
     log.debug("Writing pin {}, pulesWidthOn {}, pulseWidthOff {}", pin, pulseWidthOn, pulseWidthOff);
-    if (controller != null) {
-      controller.i2cWrite(this, Integer.parseInt(deviceBus), Integer.decode(deviceAddress), buffer, buffer.length);
+    controller.i2cWrite(this, Integer.parseInt(deviceBus), Integer.decode(deviceAddress), buffer, buffer.length);
+  }
+
+  /**
+   * adjust the inbuilt oscilator frequency reference. The PCA9685 inbuilt
+   * oscilator is listed as 25MHz in the datasheets However, it has found to be
+   * a little different and is different between batches This allows us to
+   * adjust the base frequency we use for out timings so the output pulses and
+   * PWM frequencies are more accurate. This will affect the positioning of
+   * servos, center and even the upper and lower limits.
+   * 
+   * @param adjustment
+   */
+  public void setFreqAdjust(float adjustment) {
+    if (adjustment < 0.5) {
+      freqAdjust = (float) 0.5;
+    } else if (adjustment > 1.5) {
+      freqAdjust = (float) 1.5;
     } else {
-      error("controller not set!");
+      freqAdjust = adjustment;
     }
+    log.info("pwm frequency adjust %s, resulting a frequency of %s MHz.", freqAdjust, (freqAdjust * osc_clock));
+  }
+
+  /**
+   * returns the current Frequency Adjustment value.
+   * 
+   * @return
+   */
+  public float getFreqAdjust() {
+    return freqAdjust;
   }
 
   /**
@@ -407,7 +432,19 @@ public class Adafruit16CServoDriver extends Service<Adafruit16CServoDriverConfig
       // Multiplying with factor 0.9 to correct the frequency
       // See
       // https://github.com/adafruit/Adafruit-PWM-Servo-Driver-Library/issues/11
-      prescale_value = Math.round(0.9 * osc_clock / precision / hz) - 1;
+      // The adjustment required varies from batch to batch so is now a variable
+      // that can be adjusted.
+      prescale_value = Math.round(freqAdjust * osc_clock / precision / hz) - 1;
+
+      // When the PWMfreq is changed, the SERVOMIN and SERVOMAX need to be
+      // updated as well,
+      // otherwise if the PWMfreq is increased, the pulse width will be
+      // decreased and could
+      // damage the servos by sending pulses that are too short.
+      // If the PWMfreq is decrease, then the pulse width would be increased,
+      // again potentially damaging servos.
+      SERVOMIN = (servoMinPulseWidth * (int) precision * (int) hz) / 1000000;
+      SERVOMAX = (servoMaxPulseWidth * (int) precision * (int) hz) / 1000000;
     }
 
     log.info("pwm frequency {} hz, prescale_value calculated to %s", hz, prescale_value);
@@ -507,7 +544,8 @@ public class Adafruit16CServoDriver extends Service<Adafruit16CServoDriverConfig
 
     int pin = getAddress(servo.getPin());
     // 1000 ms => 150, 2000 ms => 600
-    int pulseWidthOff = (int) (uS * 0.45) - 300;
+    // This value is calculated based on the pwmFreq setting.
+    int pulseWidthOff = (uS * (int) precision * pwmFreq) / 1000000;
     // since pulseWidthOff can be larger than > 256 it needs to be
     // sent as 2 bytes
     log.debug("servoWriteMicroseconds {} deviceAddress {} pin {} pulse {}", servo.getName(), deviceAddress, pin, pulseWidthOff);
@@ -1025,18 +1063,18 @@ public class Adafruit16CServoDriver extends Service<Adafruit16CServoDriverConfig
   public String publishServoStopped(String name) {
     return name;
   }
-  
+
   @Override
   public Adafruit16CServoDriverConfig getConfig() {
-    super.getConfig();
-    Adafruit16CServoDriverConfig config = (Adafruit16CServoDriverConfig)super.getConfig();
+
+    Adafruit16CServoDriverConfig config = (Adafruit16CServoDriverConfig) super.getConfig();
     // FIXME remove member vars use config directly
     config.controller = controllerName;
     config.deviceBus = deviceBus;
     config.deviceAddress = deviceAddress;
     return config;
   }
-  
+
   @Override
   public Adafruit16CServoDriverConfig apply(Adafruit16CServoDriverConfig c) {
     super.apply(c);
@@ -1047,8 +1085,8 @@ public class Adafruit16CServoDriver extends Service<Adafruit16CServoDriverConfig
         log.error("attaching controller failed", e);
       }
     }
-    
-    // lame - this shouldn't be "copied" over - everything should just simply use config.deviceAddress
+    // lame - this shouldn't be "copied" over - everything should just simply
+    // use config.deviceAddress
     if (config.deviceAddress != null) {
       deviceAddress = config.deviceAddress;
     }
@@ -1056,7 +1094,7 @@ public class Adafruit16CServoDriver extends Service<Adafruit16CServoDriverConfig
     if (config.deviceBus != null) {
       deviceBus = config.deviceBus;
     }
-    
+
     return c;
   }
 

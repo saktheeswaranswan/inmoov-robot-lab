@@ -1,0 +1,58 @@
+<br/><br/><br/>
+&nbsp;<div class="row">
+        <table class="padded-table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Value</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr ng-repeat="(key, value) in service.props">
+              <td>{{ key }}</td>
+              <td>
+                <span ng-if="!editMode[key]">{{ value }}</span>
+                <input ng-if="editMode[key]" type="text" ng-model="service.props[key]" />
+              </td>
+              <td>
+                <button ng-click="toggleEdit(key)">
+                  <span ng-if="!editMode[key]">✏️</span>
+                  <span ng-if="editMode[key]">✔️</span>
+                </button>
+                <button ng-click="removeProp(key)">❌</button>
+              </td>
+            </tr>
+            <tr>
+              <td><input type="text" ng-model="newProp.name" placeholder="New Name" /></td>
+              <td><input type="text" ng-model="newProp.value" placeholder="New Value" /></td>
+              <td><button ng-click="addProp()">➕</button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      
+      <!-- Email Section -->
+      <div class="row" style="margin-top: 20px;">
+        <!-- Recipient Input -->
+        <label>To:</label>
+        <input type="email" ng-model="emailRecipient" style="width: 100%;" placeholder="Recipient Email" />
+      
+        <!-- Email Message Input -->
+        <label style="margin-top: 10px;">Email Message:</label>
+        <textarea ng-model="emailMessage" rows="5" style="width: 100%;" placeholder="Type your message here..."></textarea>
+      
+        <!-- Buttons Row -->
+        <div style="margin-top: 10px;">
+          <input type="file" ng-model="attachment" style="margin-right: 10px;" />
+          <button ng-click="sendEmail()">📧 Send Email</button>
+        </div>
+      </div>
+      
+      <!-- Minimal Padding for Table -->
+      <style>
+        .padded-table th, .padded-table td {
+          padding: 5px;
+        }
+      </style>
+      

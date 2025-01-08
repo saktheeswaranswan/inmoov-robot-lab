@@ -85,6 +85,14 @@ jobs:
           name: myrobotlab
           path: target/
 
+      - name: Generate Change Log
+        run: |
+          echo "## Changelog" > changelog.md
+          echo "" >> changelog.md
+          git log --pretty=format:"- %s" -n 10 >> changelog.md
+          echo "" >> changelog.md
+          cat changelog.md
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
@@ -105,6 +113,8 @@ jobs:
             ## Base Requirements
             You will need **Java 11 or newer**. If you are only running MyRobotLab, you need the JRE (Java Runtime Environment).  
             If you are building from source, you will need the JDK (Java Development Kit). Oracle or OpenJDK will work.
+
+            $(cat changelog.md)
 
           files: target/myrobotlab-${{ needs.build.outputs.version }}.zip
           draft: false

@@ -44,9 +44,12 @@ public class Email extends Service<EmailConfig> {
   public Email(String n, String id) {
     super(n, id);
   }
+  
+  Properties props = new Properties();
+  
 
-  public Map<String, String> setGmailProps(String user, String password) {
-    Map<String, String> props = ((EmailConfig) this.config).properties;
+  public Properties setGmailProps(String user, String password) {
+    
     props.put("mail.smtp.user", user);
     props.put("mail.smtp.pass", password);
     props.put("mail.smtp.host", "smtp.gmail.com");
@@ -88,11 +91,7 @@ public class Email extends Service<EmailConfig> {
    */
 
   public void sendMail(String to, String subject, String body, String imageFile) {
-    EmailConfig config = (EmailConfig) this.config;
-
-    Properties props = new Properties();
-    props.putAll(config.properties);
-    sendTextMail(config.properties.get("mail.smtp.user"), to, subject, body, config.format, null);
+    sendTextMail((String)props.get("mail.smtp.user"), to, subject, body, config.format, null);
   }
 
   public void sendHtmlMail(String from, String to, String subject, String body, String imageFileName) {
@@ -107,9 +106,6 @@ public class Email extends Service<EmailConfig> {
       if (to == null) {
         to = config.to;
       }
-
-      Properties props = new Properties();
-      props.putAll(config.properties);
 
       Session session = Session.getDefaultInstance(props);
 
@@ -191,10 +187,6 @@ public class Email extends Service<EmailConfig> {
 
   public void sendTextMail(String from, String to, String subject, String body, String format, List<Object> attachments) {
     try {
-      EmailConfig config = (EmailConfig) this.config;
-
-      Properties props = new Properties();
-      props.putAll(config.properties);
 
       Session session = Session.getDefaultInstance(props);
 
@@ -252,11 +244,11 @@ public class Email extends Service<EmailConfig> {
     try {
 
       LoggingFactory.init(Level.INFO);
-
+      Runtime.start("webgui","WebGui");
+      Runtime.start("python","Python");
       Email email = (Email) Runtime.start("email", "Email");
-
-      email.setGmailProps("myuser@gmail.com", "xxxxxxxxx");
-      email.sendImage("some-email@email.com", "data/OpenCV/cv-00573.png");
+      email.setGmailProps("supertick@gmail.com", "XXXXXXXXXX");
+      email.sendImage("supertick@gmail.com", "data/OpenCV/i01.opencv-00136.png");
 
     } catch (Exception e) {
       log.error("main threw", e);

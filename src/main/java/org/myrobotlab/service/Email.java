@@ -47,6 +47,14 @@ public class Email extends Service<EmailConfig> {
   
   Properties props = new Properties();
   
+  
+  public Object addProperty(String name, String value) {
+    return props.setProperty(name, value);
+  }
+  
+  public Object removeProperty(String name) {
+    return props.remove(name);
+  }
 
   public Properties setGmailProps(String user, String password) {
     

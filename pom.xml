@@ -202,7 +202,7 @@
     <dependency>
       <groupId>org.bytedeco</groupId>
       <artifactId>javacpp</artifactId>
-      <version>1.5.8</version>
+      <version>1.5.11</version>
       <scope>provided</scope>
     </dependency>
     <dependency>
@@ -1085,14 +1085,14 @@
     <dependency>
       <groupId>org.bytedeco</groupId>
       <artifactId>javacv-platform</artifactId>
-      <version>1.5.8</version>
+      <version>1.5.11</version>
       <scope>provided</scope>
     </dependency>
-    <!-- Duplicate entry for org.bytedeco-javacpp-1.5.8 skipping -->
+    <!-- Duplicate entry for org.bytedeco-javacpp-1.5.11 skipping -->
     <dependency>
       <groupId>org.bytedeco</groupId>
       <artifactId>openblas</artifactId>
-      <version>0.3.21-1.5.8</version>
+      <version>0.3.28-1.5.11</version>
       <scope>provided</scope>
     </dependency>
     <!-- Duplicate entry for com.github.sarxos-webcam-capture-driver-v4l4j-0.3.13-SNAPSHOT skipping -->
@@ -1295,13 +1295,13 @@
     <dependency>
       <groupId>org.bytedeco</groupId>
       <artifactId>cpython-platform</artifactId>
-      <version>3.10.8-1.5.8</version>
+      <version>3.13.0-1.5.11</version>
       <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>org.bytedeco</groupId>
       <artifactId>cpython</artifactId>
-      <version>3.10.8-1.5.8</version>
+      <version>3.13.0-1.5.11</version>
       <scope>provided</scope>
     </dependency>
     <!-- Py4j end -->
@@ -1579,13 +1579,13 @@
     <dependency>
       <groupId>org.bytedeco</groupId>
       <artifactId>tesseract</artifactId>
-      <version>5.2.0-1.5.8</version>
+      <version>5.5.0-1.5.11</version>
       <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>org.bytedeco</groupId>
       <artifactId>tesseract-platform</artifactId>
-      <version>5.2.0-1.5.8</version>
+      <version>5.5.0-1.5.11</version>
       <scope>provided</scope>
     </dependency>
     <dependency>
@@ -1595,7 +1595,7 @@
       <scope>provided</scope>
       <type>zip</type>
     </dependency>
-    <!-- Duplicate entry for org.bytedeco-openblas-0.3.21-1.5.8 skipping -->
+    <!-- Duplicate entry for org.bytedeco-openblas-0.3.28-1.5.11 skipping -->
     <!-- TesseractOcr end -->
 
     <!-- Test begin -->

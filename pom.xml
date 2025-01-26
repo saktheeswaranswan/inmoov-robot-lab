@@ -198,64 +198,6 @@
     </dependency>
     <!-- CsvConnector end -->
 
-    <!-- Deeplearning4j begin -->
-    <dependency>
-      <groupId>org.bytedeco</groupId>
-      <artifactId>javacpp</artifactId>
-      <version>1.5.11</version>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.deeplearning4j</groupId>
-      <artifactId>deeplearning4j-core</artifactId>
-      <version>1.0.0-M2.1</version>
-      <scope>provided</scope>
-      <exclusions>
-        <exclusion>
-          <groupId>org.slf4j</groupId>
-          <artifactId>slf4j-api</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-    <dependency>
-      <groupId>org.deeplearning4j</groupId>
-      <artifactId>deeplearning4j-zoo</artifactId>
-      <version>1.0.0-M2.1</version>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.deeplearning4j</groupId>
-      <artifactId>deeplearning4j-nn</artifactId>
-      <version>1.0.0-M2.1</version>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.deeplearning4j</groupId>
-      <artifactId>deeplearning4j-modelimport</artifactId>
-      <version>1.0.0-M2.1</version>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>miniXCEPTION</groupId>
-      <artifactId>miniXCEPTION</artifactId>
-      <version>0.0</version>
-      <scope>provided</scope>
-      <type>zip</type>
-    </dependency>
-    <dependency>
-      <groupId>org.nd4j</groupId>
-      <artifactId>nd4j-native-platform</artifactId>
-      <version>1.0.0-M2.1</version>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>com.twelvemonkeys.imageio</groupId>
-      <artifactId>imageio-core</artifactId>
-      <version>3.1.1</version>
-      <scope>provided</scope>
-    </dependency>
-    <!-- Deeplearning4j end -->
-
     <!-- DiscordBot begin -->
     <dependency>
       <groupId>net.dv8tion</groupId>
@@ -1088,7 +1030,12 @@
       <version>1.5.11</version>
       <scope>provided</scope>
     </dependency>
-    <!-- Duplicate entry for org.bytedeco-javacpp-1.5.11 skipping -->
+    <dependency>
+      <groupId>org.bytedeco</groupId>
+      <artifactId>javacpp</artifactId>
+      <version>1.5.11</version>
+      <scope>provided</scope>
+    </dependency>
     <dependency>
       <groupId>org.bytedeco</groupId>
       <artifactId>openblas</artifactId>

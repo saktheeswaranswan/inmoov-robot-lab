@@ -5,8 +5,10 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.lang.reflect.Method;
 import java.net.InetAddress;
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URLDecoder;
+import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -61,8 +63,7 @@ import io.netty.handler.ssl.util.SelfSignedCertificate;
  * services are already APIs - perhaps a data API - same as service without the
  * message wrapper
  */
-public class WebGui extends Service<WebGuiConfig>
-    implements AuthorizationProvider, Gateway, Handler, ServiceLifeCycleListener {
+public class WebGui extends Service<WebGuiConfig> implements AuthorizationProvider, Gateway, Handler, ServiceLifeCycleListener {
 
   public static class LiveVideoStreamHandler implements Handler {
 
@@ -127,7 +128,7 @@ public class WebGui extends Service<WebGuiConfig>
    * needed to get the api key to select the appropriate api processor
    * 
    * @param uri
-   *            u
+   *          u
    * @return api key
    * 
    */
@@ -182,8 +183,6 @@ public class WebGui extends Service<WebGuiConfig>
   public String startURL = "http://localhost:%d/#/tabs";
 
   transient LiveVideoStreamHandler stream = new LiveVideoStreamHandler();
-
-  boolean useLocalResources = false;
 
   boolean debugConnectivity = false;
 
@@ -270,9 +269,9 @@ public class WebGui extends Service<WebGuiConfig>
    * String broadcast to specific client
    * 
    * @param uuid
-   *             u
+   *          u
    * @param str
-   *             s
+   *          s
    * 
    */
   public void broadcast(String uuid, String str) {
@@ -314,9 +313,7 @@ public class WebGui extends Service<WebGuiConfig>
         // cert.privateKey()).build();
 
         SelfSignedCertificate selfSignedCertificate = new SelfSignedCertificate();
-        SslContext context = SslContextBuilder
-            .forServer(selfSignedCertificate.certificate(), selfSignedCertificate.privateKey())
-            .sslProvider(SslProvider.JDK)
+        SslContext context = SslContextBuilder.forServer(selfSignedCertificate.certificate(), selfSignedCertificate.privateKey()).sslProvider(SslProvider.JDK)
             .clientAuth(ClientAuth.NONE).build();
 
         configBuilder.sslContext(context);
@@ -495,8 +492,7 @@ public class WebGui extends Service<WebGuiConfig>
         } else if ((bodyData != null) && log.isDebugEnabled()) {
           logData = bodyData;
         }
-        log.debug("-->{} {} {} - [{}] from connection {}", (newPersistentConnection) ? "new" : "", request.getMethod(),
-            request.getRequestURI(), logData, uuid);
+        log.debug("-->{} {} {} - [{}] from connection {}", (newPersistentConnection) ? "new" : "", request.getMethod(), request.getRequestURI(), logData, uuid);
       }
 
       // important persistent connections will have associated routes ...
@@ -574,8 +570,7 @@ public class WebGui extends Service<WebGuiConfig>
           }
 
           if (msg.containsHop(getId())) {
-            log.error("{} dumping duplicate hop msg to avoid cyclical from {} --to--> {}.{}", getName(), msg.sender,
-                msg.name, msg.method);
+            log.error("{} dumping duplicate hop msg to avoid cyclical from {} --to--> {}.{}", getName(), msg.sender, msg.name, msg.method);
             return;
           }
 
@@ -921,7 +916,7 @@ public class WebGui extends Service<WebGuiConfig>
    * remotely control UI
    * 
    * @param panel
-   *              - the panel which has been moved or resized
+   *          - the panel which has been moved or resized
    */
   public void savePanel(Panel panel) {
     if (panel.name == null) {
@@ -1102,18 +1097,6 @@ public class WebGui extends Service<WebGuiConfig>
     inMsgQueue.stop();
   }
 
-  /**
-   * UseLocalResources determines if references to JQuery JavaScript library are
-   * local or if the library is linked to using content delivery network.
-   * Default (false) is to use the CDN
-   *
-   * @param useLocalResources
-   *                          - true uses local resources fals uses cdn
-   */
-  public void useLocalResources(boolean useLocalResources) {
-    this.useLocalResources = useLocalResources;
-  }
-
   public void display(String image) {
     // FIXME
     // http/https can be proxied if necessary or even fetched,
@@ -1184,8 +1167,35 @@ public class WebGui extends Service<WebGuiConfig>
 
     try {
 
-      Runtime.main(new String[] { "--log-level", "warn", "-s", "c1", "Clock", "webgui", "WebGui"});
+      // URI hostUri =
+      // URI.create("https://admin:Str0ngP@ssw0rd!@localhost:9200");
+      // URI hostUri = URI.create("https://admin:blah@localhost:9200");
+      // String userInfo = hostUri.getUserInfo();
+      // System.out.println("userInfo: " + userInfo);
+      // System.out.println("hostUri: " + hostUri);
+      // System.out.println("hostUri.getScheme(): " + hostUri.getScheme());
+      // System.out.println("hostUri.getHost(): " + hostUri.getHost());
+      // System.out.println("hostUri.getPort(): " + hostUri.getPort());
+
+      String username = URLEncoder.encode("admin", StandardCharsets.UTF_8.toString());
+      String password = URLEncoder.encode("Str0ngP@ssw0rd!", StandardCharsets.UTF_8.toString());
+      String host = "localhost:9200";
+
+      URI hostUri = URI.create("https://" + username + ":" + password + "@" + host);
+      System.out.println("URI: " + hostUri);
+
+      String userInfo = hostUri.getUserInfo();
+      System.out.println("userInfo: " + userInfo);
+      System.out.println("hostUri: " + hostUri);
+      System.out.println("hostUri.getScheme(): " + hostUri.getScheme());
+      System.out.println("hostUri.getHost(): " + hostUri.getHost());
+      System.out.println("hostUri.getPort(): " + hostUri.getPort());
+
+      Runtime.main(new String[] { "--log-level", "warn", "-s", "c1", "Clock", "webgui", "WebGui" });
       // Runtime.main(new String[] { "--install" });
+
+      Runtime.start("log", "Log");
+      Runtime.start("python", "Python");
 
       boolean done = true;
       if (done) {
@@ -1249,8 +1259,7 @@ public class WebGui extends Service<WebGuiConfig>
       arduino.connect("/dev/ttyACM0");
 
       for (int i = 0; i < 1000; ++i) {
-        webgui.display(
-            "https://i.kinja-img.com/gawker-media/image/upload/c_scale,f_auto,fl_progressive,q_80,w_800/pytutcxcrfjvuhz2jipa.jpg");
+        webgui.display("https://i.kinja-img.com/gawker-media/image/upload/c_scale,f_auto,fl_progressive,q_80,w_800/pytutcxcrfjvuhz2jipa.jpg");
       }
 
       // Runtime.setLogLevel("ERROR");

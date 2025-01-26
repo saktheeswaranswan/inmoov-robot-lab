@@ -847,11 +847,6 @@ public class Solr extends Service<SolrConfig> implements DocumentListener, TextL
     return data;
   }
 
-  // attach pattern stuff
-  public void attach(Deeplearning4j dl4j) {
-    dl4j.addListener("publishClassification", getName());
-  }
-
   // TODO: index the classifications with the cvdata. not separately..
   // o/w we need a way to relate back to the frame that this is a classification
   // of

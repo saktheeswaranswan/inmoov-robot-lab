@@ -2,7 +2,6 @@ package org.myrobotlab.service;
 
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
 import java.util.Properties;
 
 import javax.activation.DataHandler;
@@ -32,7 +31,7 @@ import org.slf4j.Logger;
  * A different client that has more access might be this ...
  * https://github.com/google/gdata-java-client
  * 
- * @author grog
+ * @author GroG
  *
  */
 public class Email extends Service<EmailConfig> {
@@ -44,20 +43,19 @@ public class Email extends Service<EmailConfig> {
   public Email(String n, String id) {
     super(n, id);
   }
-  
+
   Properties props = new Properties();
-  
-  
+
   public Object addProperty(String name, String value) {
     return props.setProperty(name, value);
   }
-  
+
   public Object removeProperty(String name) {
     return props.remove(name);
   }
 
   public Properties setGmailProps(String user, String password) {
-    
+
     props.put("mail.smtp.user", user);
     props.put("mail.smtp.pass", password);
     props.put("mail.smtp.host", "smtp.gmail.com");
@@ -71,12 +69,11 @@ public class Email extends Service<EmailConfig> {
 
     return props;
   }
-  
 
   /**
-   * Sends an email of an image. To, From ect are required to 
-   * be setup in config, designed to be the recipient of subscribed
-   * image publisher. Must be non encoded filesystem image file.
+   * Sends an email of an image. To, From ect are required to be setup in
+   * config, designed to be the recipient of subscribed image publisher. Must be
+   * non encoded filesystem image file.
    * 
    * TODO - implemented encoded images to be sent, base64 or url references.
    * 
@@ -99,7 +96,7 @@ public class Email extends Service<EmailConfig> {
    */
 
   public void sendMail(String to, String subject, String body, String imageFile) {
-    sendTextMail((String)props.get("mail.smtp.user"), to, subject, body, config.format, null);
+    sendTextMail((String) props.get("mail.smtp.user"), to, subject, body, config.format, null);
   }
 
   public void sendHtmlMail(String from, String to, String subject, String body, String imageFileName) {
@@ -110,7 +107,7 @@ public class Email extends Service<EmailConfig> {
       }
 
       EmailConfig config = (EmailConfig) this.config;
-      
+
       if (to == null) {
         to = config.to;
       }
@@ -252,8 +249,8 @@ public class Email extends Service<EmailConfig> {
     try {
 
       LoggingFactory.init(Level.INFO);
-      Runtime.start("webgui","WebGui");
-      Runtime.start("python","Python");
+      Runtime.start("webgui", "WebGui");
+      Runtime.start("python", "Python");
       Email email = (Email) Runtime.start("email", "Email");
       email.setGmailProps("supertick@gmail.com", "XXXXXXXXXX");
       email.sendImage("supertick@gmail.com", "data/OpenCV/i01.opencv-00136.png");

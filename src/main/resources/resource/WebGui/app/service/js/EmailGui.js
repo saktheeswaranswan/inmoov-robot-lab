@@ -31,7 +31,6 @@ angular.module("mrlapp.service.EmailGui", []).controller("EmailGuiCtrl", [
     }
 
     // Email data
-    $scope.emailRecipient = ""
     $scope.emailMessage = ""
     $scope.attachment = null
 
@@ -44,7 +43,7 @@ angular.module("mrlapp.service.EmailGui", []).controller("EmailGuiCtrl", [
 
     // Send email function (placeholder)
     $scope.sendEmail = function () {
-      if (!$scope.emailRecipient.trim()) {
+      if (!$scope.service.config.to.trim()) {
         alert("Please enter a recipient email.")
         return
       }
@@ -55,14 +54,14 @@ angular.module("mrlapp.service.EmailGui", []).controller("EmailGuiCtrl", [
       }
 
       console.log("Sending email...")
-      console.log("To:", $scope.emailRecipient)
+      console.log("To:", $scope.service.config.to)
       console.log("Message:", $scope.emailMessage)
       console.log("SMTP Config:", $scope.service.props)
       if ($scope.attachment) {
         console.log("Attachment:", $scope.attachment.name)
       }
-
-      alert("Email Sent Successfully! (This is a placeholder function)")
+      // msg.send("broadcastState")
+      msg.send("sendEmail", $scope.service.config.to, $scope.emailSubject, $scope.emailMessage, $scope.emailFormat, $scope.attachment)
     }
 
     // GOOD TEMPLATE TO FOLLOW
@@ -81,23 +80,14 @@ angular.module("mrlapp.service.EmailGui", []).controller("EmailGuiCtrl", [
           _self.updateState(data)
           $scope.$apply()
           break
-        case "onTime":
-          const date = new Date(data)
-          $scope.onTime = date.toLocaleString()
-          $scope.$apply()
-          break
-        case "onEpoch":
-          $scope.onEpoch = data
-          $scope.$apply()
-          break
         default:
           console.error("ERROR - unhandled method " + $scope.name + " " + inMsg.method)
           break
       }
     }
 
-    msg.subscribe("publishTime")
-    msg.subscribe("publishEpoch")
+    // msg.subscribe("publishTime")
+    // msg.subscribe("publishEpoch")
     msg.subscribe(this)
   },
 ])

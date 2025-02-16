@@ -8,7 +8,6 @@ import java.util.Set;
 
 import org.myrobotlab.framework.Inbox;
 import org.myrobotlab.framework.MRLListener;
-import org.myrobotlab.framework.MethodCache;
 import org.myrobotlab.framework.MethodEntry;
 import org.myrobotlab.framework.Outbox;
 import org.myrobotlab.framework.Peer;

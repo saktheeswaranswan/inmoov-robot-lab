@@ -1,7 +1,6 @@
 package org.myrobotlab.service;
 
 import java.util.Date;
-import java.util.List;
 import java.util.Properties;
 
 import javax.activation.DataHandler;
@@ -82,9 +81,21 @@ public class Email extends Service<EmailConfig> {
   public void onImage(ImageData img) {
     sendHtmlMail(null, null, img.src, null, img.src);
   }
+  
+  public void sendImage(String imageFile) {
+    sendHtmlMail(null, null, imageFile, null, imageFile);
+  }
 
   public void sendImage(String to, String imageFile) {
     sendHtmlMail(null, to, imageFile, null, imageFile);
+  }
+
+  public void sendEmail(String to, String subject, String body) {
+    sendEmail(to, subject, body, "html", null);
+  }
+
+  public void sendEmail(String to, String subject, String body, String imageFile) {
+    sendEmail(to, subject, body, "html", imageFile);
   }
 
   /**
@@ -95,8 +106,12 @@ public class Email extends Service<EmailConfig> {
    * @param imageFile
    */
 
-  public void sendMail(String to, String subject, String body, String imageFile) {
-    sendTextMail((String) props.get("mail.smtp.user"), to, subject, body, config.format, null);
+  public void sendEmail(String to, String subject, String body, String format, String imageFile) {
+    if ("text".equals(format)) {
+      sendTextMail((String) props.get("mail.smtp.user"), to, subject, body, imageFile);
+    } else {
+      sendHtmlMail((String) props.get("mail.smtp.user"), to, subject, body, imageFile);
+    }
   }
 
   public void sendHtmlMail(String from, String to, String subject, String body, String imageFileName) {
@@ -106,10 +121,12 @@ public class Email extends Service<EmailConfig> {
         body = "";
       }
 
-      EmailConfig config = (EmailConfig) this.config;
-
       if (to == null) {
         to = config.to;
+      }
+
+      if (from == null) {
+        from = config.from;
       }
 
       Session session = Session.getDefaultInstance(props);
@@ -128,14 +145,16 @@ public class Email extends Service<EmailConfig> {
       multipart.addBodyPart(messageBodyPart);
 
       // second part (the image)
-      messageBodyPart = new MimeBodyPart();
-      DataSource fds = new FileDataSource(imageFileName);
+      if (imageFileName != null && !imageFileName.isEmpty()) {
+        messageBodyPart = new MimeBodyPart();
+        DataSource fds = new FileDataSource(imageFileName);
 
-      messageBodyPart.setDataHandler(new DataHandler(fds));
-      messageBodyPart.setHeader("Content-ID", "<image>");
+        messageBodyPart.setDataHandler(new DataHandler(fds));
+        messageBodyPart.setHeader("Content-ID", "<image>");
 
-      // add image to the multipart
-      multipart.addBodyPart(messageBodyPart);
+        // add image to the multipart
+        multipart.addBodyPart(messageBodyPart);
+      }
 
       // put everything together
       msg.setContent(multipart);
@@ -145,7 +164,7 @@ public class Email extends Service<EmailConfig> {
       // creates a new e-mail message
       // Message msg = new MimeMessage(session);
 
-      if (from != null) {
+      if (from != null && !from.isEmpty()) {
         msg.setFrom(new InternetAddress(from));
       }
       InternetAddress[] toAddresses = { new InternetAddress(to) };
@@ -156,12 +175,6 @@ public class Email extends Service<EmailConfig> {
       // msg.setText(body);
 
       Transport t = session.getTransport("smtp");
-      // t.connect(host, userName, password);
-      // t.connect();
-      // t.connect(host, userName, password);
-      // THIS IS RIDICULOUS - THEY SUPPLY A BAJILLION SESSION PROPS INCLUDING
-      // USERNAME & PASSWORD
-      // BUT THEY HAVE TO BE PULLED BACK OUT IN ORDER TO DO THE TRANSPORT ???
 
       String user = props.getProperty("mail.smtp.user");
       String password = props.getProperty("mail.smtp.pass");
@@ -180,9 +193,12 @@ public class Email extends Service<EmailConfig> {
         error("port must be set");
       }
 
+      log.info("connecting to host");
       t.connect(host, Integer.parseInt(port), user, password);
+      log.info("sending email message");
 
       t.sendMessage(msg, msg.getAllRecipients());
+      log.info("closing session");
       t.close();
     } catch (Exception e) {
       error(e);
@@ -190,7 +206,7 @@ public class Email extends Service<EmailConfig> {
 
   }
 
-  public void sendTextMail(String from, String to, String subject, String body, String format, List<Object> attachments) {
+  public void sendTextMail(String from, String to, String subject, String body, String attachment) {
     try {
 
       Session session = Session.getDefaultInstance(props);
@@ -245,15 +261,64 @@ public class Email extends Service<EmailConfig> {
 
   }
 
+  /**
+   * Load the config into memory
+   */
+  @Override
+  public EmailConfig getConfig() {
+    super.getConfig();
+
+    config.auth = (String) props.getOrDefault("mail.smtp.auth", "true");
+    config.debug = (String) props.getOrDefault("mail.smtp.debug", "true");
+    config.host = (String) props.getOrDefault("mail.smtp.host", config.host);
+    config.pass = (String) props.getOrDefault("mail.smtp.pass", config.pass);
+    config.port = (String) props.getOrDefault("mail.smtp.port", config.port);
+    config.protocols = (String) props.getOrDefault("mail.smtp.ssl.protocols", "TLSv1.2");
+    config.socketFactory = (String) props.getOrDefault("mail.smtp.socketFactory.class", "javax.net.ssl.SSLSocketFactory");
+    config.starttlsEnabled = (String) props.getOrDefault("mail.smtp.starttls.enable", "true");
+    config.starttlsRequired = (String) props.getOrDefault("mail.smtp.starttls.required", "true");
+    config.user = (String) props.getOrDefault("mail.smtp.user", config.user);
+
+    return config;
+  }
+
+  /**
+   * Applies the config to the service by unloading the config object data into
+   * props.
+   */
+  @Override
+  public EmailConfig apply(EmailConfig c) {
+    super.apply(c);
+
+    props.put("mail.smtp.auth", c.auth);
+    props.put("mail.smtp.debug", c.debug);
+    props.put("mail.smtp.host", c.host);
+    props.put("mail.smtp.pass", c.pass);
+    props.put("mail.smtp.port", c.port);
+    props.put("mail.smtp.ssl.protocols", c.protocols);
+    props.put("mail.smtp.socketFactory.class", c.socketFactory);
+    props.put("mail.smtp.starttls.enable", c.starttlsEnabled);
+    props.put("mail.smtp.starttls.required", c.starttlsRequired);
+    props.put("mail.smtp.user", c.user);
+
+    return c;
+  }
+
   public static void main(String[] args) {
     try {
 
+      Runtime runtime = Runtime.getInstance();
       LoggingFactory.init(Level.INFO);
       Runtime.start("webgui", "WebGui");
       Runtime.start("python", "Python");
       Email email = (Email) Runtime.start("email", "Email");
-      email.setGmailProps("supertick@gmail.com", "XXXXXXXXXX");
-      email.sendImage("supertick@gmail.com", "data/OpenCV/i01.opencv-00136.png");
+      // email.setGmailProps("supertick@gmail.com", "XXXXXX");
+      // email.save();
+      // email.sendImage("supertick@gmail.com", "data/OpenCV/cv-01991.png");
+      email.sendEmail(fs, fs, fs, fs);
+      email.sendHtmlMail("worky@gmail.com", "supertick@gmail.com", "Test", "Hello there !", "data/OpenCV/cv-01991.png");
+      // Runtime.saveConfig("non-default");
+      // runtime.save();
 
     } catch (Exception e) {
       log.error("main threw", e);

@@ -26,7 +26,7 @@ jobs:
         run: sudo apt-get install -y libv4l-0 ffmpeg
 
       - name: Clear Local Maven Cache
-        run: rm -rf ~/.m2/repository
+        run: rm -rf ~/.m2/repository && rm -f ./libraries/serviceData.json
 
       - name: Dependency Test
         run: mvn test -Dtest=org.myrobotlab.framework.DependencyTest -q

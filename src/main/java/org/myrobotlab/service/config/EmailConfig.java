@@ -5,19 +5,21 @@ package org.myrobotlab.service.config;
  */
 public class EmailConfig extends ServiceConfig {
 
-  public String to; // if set sends auto
-  public String format = "text/html"; // text/html or text/plain
-  public String user = null;
-  public String host = null;
-  public int port = 25; /* 465, 587 */
+  // javax email props are so inane they don't preserve typeness
+  // and error if typed
+  
+  public String auth = "true";
+  public String debug = "true";
+  public String format = "html"; // text/html or text/plain
   public String from = null;
-  boolean auth = true;
-  boolean starttls = true;
-  boolean debug = true;
-  boolean starttlsRequired = true;
-  String protocols = "TLSv1.2";
-  String socketFactory = "javax.net.ssl.SSLSocketFactory";
-
+  public String host = null;
   public String pass = null;
+  public String protocols = "TLSv1.2";
+  public String port = "25"; /* 465, 587 */
+  public String socketFactory = "javax.net.ssl.SSLSocketFactory";
+  public String starttlsEnabled = "true";
+  public String starttlsRequired = "true";
+  public String to; // if set sends auto
+  public String user = null;
 
 }

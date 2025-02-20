@@ -1003,7 +1003,7 @@ public abstract class AbstractServo<C extends ServoConfig> extends Service<C> im
 
   @Override
   public void waitTargetPos() {
-    while (this.getCurrentInputPos() != this.targetPos) {
+    while (Math.abs(this.getCurrentInputPos() - this.targetPos) > 3.0) {
       sleep(30);
     }
   }

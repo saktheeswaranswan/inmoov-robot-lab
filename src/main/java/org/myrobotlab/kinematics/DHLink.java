@@ -178,8 +178,8 @@ public class DHLink implements Serializable {
   public boolean rotate(double angle) {
     // TODO: which parameter?
     if (DHLinkType.REVOLUTE.equals(this.type)) {
-      if (angle <= max && angle >= min) {
-        this.theta = angle;
+      if (angle <= max + 0.0001 && angle >= min - 0.0001) {
+        this.theta = Math.min(Math.max(angle, min), max);
       } else {
         // TODO: it's out of range!
         log.info("Rotation out of range for link {}, max: {}, min: {}", angle, max, min);
@@ -317,9 +317,18 @@ public class DHLink implements Serializable {
 
   public Double getPositionValueDeg() {
     if (DHLinkType.REVOLUTE.equals(type)) {
-      return (theta * 180 / Math.PI) - (initialTheta * 180 / Math.PI);
+      return (theta * 180 / Math.PI) - (initialTheta * 180 / Math.PI) + offset;
     } else if (DHLinkType.REVOLUTE_ALPHA.equals(type)) {
-      return (alpha * 180 / Math.PI) - (initialTheta * 180 / Math.PI);
+      return (alpha * 180 / Math.PI) - (initialTheta * 180 / Math.PI) + offset;
+    }
+    return 0.0;
+  }
+
+  public Double getPositionValueRad() {
+    if (DHLinkType.REVOLUTE.equals(type)) {
+      return Math.toRadians((theta * 180 / Math.PI) - (initialTheta * 180 / Math.PI));
+    } else if (DHLinkType.REVOLUTE_ALPHA.equals(type)) {
+      return Math.toRadians((alpha * 180 / Math.PI) - (initialTheta * 180 / Math.PI));
     }
     return 0.0;
   }

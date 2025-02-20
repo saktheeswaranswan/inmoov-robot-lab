@@ -239,10 +239,10 @@ public class InMoov2Arm extends Service<InMoov2ArmConfig> implements IKJointAngl
     DHRobotArm arm = getDHRobotArm(getName(), getSide());
     for (PlanningStateTime state : plan) {
       moveToBlocking(
-              Math.toDegrees(state.get(0)) + arm.getLink(0).getOffset(),
-              Math.toDegrees(state.get(1)) + arm.getLink(1).getOffset(),
-              Math.toDegrees(state.get(2)) + arm.getLink(2).getOffset(),
-              Math.toDegrees(state.get(3)) + arm.getLink(3).getOffset());
+              state.get(0),
+              state.get(1),
+              state.get(2),
+              state.get(3));
     }
   }
 

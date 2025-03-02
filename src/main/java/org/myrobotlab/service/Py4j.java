@@ -470,7 +470,7 @@ public class Py4j extends Service<Py4jConfig> implements GatewayServerListener, 
   public void startPythonProcess() {
       try {
           // Determine Python executable
-          String pythonCommand = findPythonExecutable();
+          String pythonCommand = findSystemPythonExecutable();
           if (pythonCommand == null) {
               error("Python is not installed or not found in system PATH.");
               return;
@@ -528,7 +528,7 @@ public class Py4j extends Service<Py4jConfig> implements GatewayServerListener, 
    * Finds the Python executable and returns its path. 
    * Checks both "python3" and "python" commands.
    */
-  private String findPythonExecutable() {
+  private String findSystemPythonExecutable() {
       try {
           ProcessBuilder processBuilder = new ProcessBuilder("python3", "--version");
           Process process = processBuilder.start();
@@ -545,6 +545,22 @@ public class Py4j extends Service<Py4jConfig> implements GatewayServerListener, 
 
       return null; // Python not found
   }
+  
+  
+  private String findVenvPythonExecutable() {
+    String venv = getDataDir() + fs + "venv";
+    String venvPython = Platform.getLocalInstance().isWindows() 
+        ? venv + fs + "Scripts" + fs + "python.exe" 
+        : venv + fs + "bin" + fs + "python";
+
+    File check = new File(venvPython);
+    if (!check.exists()){
+      error("Could not find %s", venvPython);
+      return null;
+    }
+    return venvPython;
+}
+
 
 
 
@@ -562,7 +578,7 @@ public class Py4j extends Service<Py4jConfig> implements GatewayServerListener, 
   public void installPipPackages(List<String> packages) throws IOException {
     List<String> commandArgs = new ArrayList<>(List.of("-m", "pip", "install"));
     commandArgs.addAll(packages);
-    ProcessBuilder pipProcess = new ProcessBuilder(findPythonExecutable());
+    ProcessBuilder pipProcess = new ProcessBuilder(findVenvPythonExecutable());
     pipProcess.command().addAll(commandArgs);
     Process proc = pipProcess.redirectErrorStream(true).start();
     new Thread(() -> {

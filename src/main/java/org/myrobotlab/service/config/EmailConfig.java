@@ -20,6 +20,6 @@ public class EmailConfig extends ServiceConfig {
   public String starttlsEnabled = "true";
   public String starttlsRequired = "true";
   public String to; // if set sends auto
-  public String user = null;
+  public String user = "";
 
 }

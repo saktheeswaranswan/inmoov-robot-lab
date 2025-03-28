@@ -322,7 +322,7 @@ public class InMoov2Config extends ServiceConfig {
     simulator.multiMapped.put(name + ".rightHand.thumb", new String[] { name + ".rightHand.thumb1", name + ".rightHand.thumb2", name + ".rightHand.thumb3" });
 
     // simulator.nodes.put("camera", new UserData());
-    simulator.nodes.put(name + ".head.jaw", new UserDataConfig(new MapperLinear(0.0, 180.0, -5.0, 80.0, true, false), "x"));
+    simulator.nodes.put(name + ".head.jaw", new UserDataConfig(new MapperLinear(0.0, 180.0, 0.0, 25.0, true, false), "x"));
     simulator.nodes.put(name + ".head.neck", new UserDataConfig(new MapperLinear(0.0, 180.0, 20.0, -20.0, true, false), "x"));
     simulator.nodes.put(name + ".head.rothead", new UserDataConfig(null, "y"));
     simulator.nodes.put(name + ".head.rollNeck", new UserDataConfig(new MapperLinear(0.0, 180.0, 30.0, -30.0, true, false), "z"));
